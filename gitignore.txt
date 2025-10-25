@@ -1,0 +1,94 @@
+# === 通用系统忽略项 ===
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+
+# === 前端项目常用忽略项（Node.js / Vite / Vue） ===
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env.local
+/frontend/.vitepress/cache
+/frontend/.output/
+package-lock.json
+yarn.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tests/**/coverage/
+tests/e2e/reports
+selenium-debug.log
+
+# 编辑器与工具配置
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
+*.code-workspace
+.history/
+
+# === 后端项目（Spring Boot + Maven）忽略项 ===
+/backend/**/target/
+/backend/.idea/
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+/backend/logs/
+*.iml
+
+# Maven 本地仓库缓存（如果不共享）
+.mvn/
+**/mvnw
+**/mvnw.cmd
+
+# === Visual Studio 项目常用忽略项（如需 C#/WPF） ===
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.vcxproj.filters
+*.pdb
+*.obj
+*.exe
+*.ilk
+*.aps
+*.ncb
+*.sdf
+*.opendb
+*.VC.db
+*.VC.opendb
+*.tlog
+*.scc
+bin/
+obj/
+Debug/
+Release/
+
+# === 发布 / 部署相关 ===
+*.publish.xml
+*.azurePubxml
+PublishScripts/
+publish/
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# === 数据库 & 密钥 ===
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+*.rptproj.bak
+
+# === 你项目特有的忽略项 ===
+/Navicat/
+/redis/
