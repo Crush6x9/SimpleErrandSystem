@@ -88,7 +88,3 @@ publish/
 *.pfx
 *.publishsettings
 *.rptproj.bak
-
-# === 你项目特有的忽略项 ===
-/Navicat/
-/redis/
