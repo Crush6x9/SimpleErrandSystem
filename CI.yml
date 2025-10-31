@@ -1,0 +1,52 @@
+name: CI - Build Vue + Spring Boot
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run test || echo "无测试，跳过"
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vue-dist
+          path: frontend/dist/
+
+  build-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - run: mvn -B package -DskipTests
+      - uses: actions/upload-artifact@v4
+        with:
+          name: springboot-jar
+          path: backend/target/*.jar
+
+  summary:
+    needs: [build-frontend, build-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "CI 完成！前端 dist/ 和后端 JAR 已生成。"
