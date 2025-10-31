@@ -18,7 +18,9 @@
       "DOM.Iterable"
     ],
     "types": [
-      "vite/client"
+      "vite/client",
+       "vant",
+       "vue"
     ],
     "paths": {
       "@/*": [
@@ -26,7 +28,7 @@
       ]
     },
     // 添加关键配置解决导入问题
-    "verbatimModuleSyntax": true,
+    // "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true
   },
   "include": [
@@ -34,7 +36,10 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "vite.config.ts"
+    "vite.config.ts",
+    // "src/auto-imports.d.ts", 
+    // "src/components.d.ts",
+    // "types/**/*.d.ts"   
   ],
   "exclude": [
     "node_modules",
