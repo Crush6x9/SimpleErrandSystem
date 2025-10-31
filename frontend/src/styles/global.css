@@ -1,0 +1,41 @@
+/* 全局样式 */
+/* 重置默认边距 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px; /* 基准字体大小，可用于 rem */
+}
+
+body {
+  /* 让页面内容居中显示，模拟手机居中效果 */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #f4f4f4;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* 主应用容器：固定为手机宽度 */
+#app {
+  width: 375px;
+  min-height: 100vh;
+  background: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15); /* 美化：加阴影，像手机框 */
+}
+
+/* 小屏幕设备自适应缩放（防止溢出） */
+@media (max-width: 375px) {
+  #app {
+    width: 100vw;
+    box-shadow: none;
+  }
+}

@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import './styles/global.css'  // 引入全局样式
 
 // 引入 Element Plus 及其 CSS
 import ElementPlus from 'element-plus'
