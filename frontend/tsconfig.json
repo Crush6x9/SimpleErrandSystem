@@ -18,6 +18,7 @@
       "DOM.Iterable"
     ],
     "types": [
+      "pinia",
       "vite/client",
        "vant",
        "vue"
