@@ -1,16 +1,23 @@
-<script setup lang="ts">
+<script setup>
+import TheHeader from '@/components/TheHeader.vue';
+import TheFooter from '@/components/TheFooter.vue';
 </script>
 
 <template>
-  <div id="app">
-    <nav style="margin-bottom: 20px;">
-      <router-link to="/">首页</router-link> |
-      <router-link to="/about">关于</router-link>
-    </nav>
-    <router-view />
+  <div id="app" class="page-container">
+    <TheHeader/>
+    
+    <div class="app-content">
+      <router-view />
+    </div>
+    
+    <TheFooter/>
   </div>
 </template>
 
-<style>
-/* 可添加全局样式 */
+<style scoped>
+.app-content {
+  flex: 1;
+  padding-bottom: 50px; /* 为底部导航栏留出空间 */
+}
 </style>

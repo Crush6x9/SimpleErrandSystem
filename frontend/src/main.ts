@@ -8,9 +8,9 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import Vant from 'vant'
 import 'vant/lib/index.css'
-// 可选：中文语言支持
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
-// import { NavBar, Button } from 'vant'
+
+import zhCn from 'element-plus/es/locale/lang/zh-cn'// 可选：中文语言支持
+
 // 创建应用
 const app = createApp(App)
 
@@ -20,7 +20,5 @@ app.use(ElementPlus, {
   locale: zhCn,
   size: 'default' // 全局组件尺寸 'small' | 'default' | 'large'
 })
-// app.use(NavBar)
-// app.use(Button)
 app.use(Vant)
 app.mount('#app')
