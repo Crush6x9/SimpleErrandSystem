@@ -8,6 +8,6 @@
 />
 </div>
 </template>
-<script setup>
+<script setup lang="ts">
 const onClickLeft = () => history.back();
 </script>

@@ -1,5 +1,20 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { isAuthenticated } from '@/utils/auth'
 
+const router = useRouter()
+const isAuthenticatedRef = ref(false)
+
+// 检查登录状态
+onMounted(() => {
+  isAuthenticatedRef.value = isAuthenticated()
+})
+
+// 处理登录/注册按钮点击
+const handleAuthClick = () => {
+  router.push({ name: 'Login',query: { redirect: '/home' }  })
+}
 </script>
 
 <template>
@@ -9,7 +24,8 @@
     </div>
     <van-card class="home_card" desc="跑了个腿 Run A Leg" title="欢迎加入">
       <template #footer>
-        <van-button size="normal">注册/登录</van-button>
+        <!-- 根据登录状态显示按钮 -->
+        <van-button v-if="!isAuthenticatedRef" size="normal" @click="handleAuthClick">注册/登录</van-button>
       </template>
     </van-card>
     <van-grid clickable :column-num="2">
@@ -30,6 +46,7 @@
 </template>
 
 <style scoped>
+/* 保持原有样式不变 */
 .home_card {
   margin: 0;
 }

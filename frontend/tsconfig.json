@@ -18,19 +18,21 @@
       "DOM.Iterable"
     ],
     "types": [
-      "pinia",
       "vite/client",
+       "element-plus",
        "vant",
-       "vue"
+       "vue",
+       "vue-router"
     ],
     "paths": {
       "@/*": [
         "./src/*"
       ]
     },
-    // 添加关键配置解决导入问题
-    // "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true
+    // 关键配置：启用 Vue 模板编译器
+    "typeRoots": ["node_modules/@types"],
+    "baseUrl": "./",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.ts",
@@ -38,9 +40,7 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "vite.config.ts",
-    // "src/auto-imports.d.ts", 
-    // "src/components.d.ts",
-    // "types/**/*.d.ts"   
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",

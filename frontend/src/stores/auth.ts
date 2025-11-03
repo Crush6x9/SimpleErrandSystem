@@ -40,3 +40,4 @@ export const useAuthStore = defineStore('auth', () => { //使用defineStore定�
     checkAuth
   }
 })
+

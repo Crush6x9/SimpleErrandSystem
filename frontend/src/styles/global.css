@@ -71,3 +71,53 @@ body {
     width: 100vw;
   }
 }
+
+/* 登录/注册页面背景 */
+.login-container, .register-container, .forget-container, .set-password-container {
+  background-color: #f5f5f5;
+}
+
+/* 导航栏返回按钮 */
+:deep(.van-nav-bar__arrow) {
+  font-size: 18px;
+  margin-right: 5px;
+}
+
+:deep(.van-nav-bar__text) {
+  font-weight: 500;
+}
+
+/* 协议链接样式 */
+.agreement-link {
+  color: #1989fa;
+  text-decoration: underline;
+}
+
+/* 验证码输入框样式 */
+.code-input-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+}
+
+.verify-button {
+  margin-top: 15px;
+}
+
+/* 验证码对话框全局样式 */
+:deep(.verification-dialog) {
+  .van-dialog {
+    border-radius: 16px !important;
+    overflow: hidden;
+  }
+  
+  .van-dialog__header {
+    padding: 16px 16px 8px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
+  
+  .van-dialog__content {
+    padding: 0 16px 16px !important;
+  }
+}
