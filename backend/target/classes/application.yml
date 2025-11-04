@@ -1,0 +1,49 @@
+#下面这些内容是为了让MyBatis映射
+#指定Mybatis的Mapper文件
+mybatis:
+  mapper-locations: classpath*:mapper/*Mapper.xml
+  #指定Mybatis的实体目录
+  type-aliases-package: com.errand.entity
+
+# 应用服务 WEB 访问端口
+server:
+  port: 8080
+
+# Spring 配置
+spring:
+  # 系统应用命名
+  application:
+    name: errandSystem
+  # MySQL数据源、账户、密码
+  datasource:
+    url: jdbc:mysql://localhost:3306/errand
+    username: root
+    password: 123456
+  # 文件上传限制
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+# 日志信息配置
+logging:
+  # 字符编码
+  charset:
+    console: UTF-8
+    file: UTF-8
+  # 日志记录级别
+  level:
+    com.errand: INFO
+    com.errand.mapper: DEBUG
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.mybatis: DEBUG
+    org.apache: WARN
+  # 日志记录格式
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  # 文件路径
+  file:
+    name: logs/errandSystem-dev.log
