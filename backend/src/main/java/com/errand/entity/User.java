@@ -29,7 +29,7 @@ public class User {
     @ApiModelProperty(value = "证件图片路径")
     private String idCardImage;
 
-    @ApiModelProperty(value = "认证状态", example = "false")
+    @ApiModelProperty(value = "认证状态")
     private Boolean verified;
 
     @ApiModelProperty(value = "创建时间")

@@ -1,10 +1,16 @@
 package com.errand.dto;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @Data
+@ApiModel(description = "登录响应")
 public class LoginResponse {
+    @ApiModelProperty(value = "JWT令牌")
     private String token;
+
+    @ApiModelProperty(value = "用户信息")
     private UserInfo userInfo;
 
     @Data
