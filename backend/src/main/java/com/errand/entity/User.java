@@ -9,32 +9,33 @@ import java.time.LocalDateTime;
 @Data
 @ApiModel("用户")
 public class User {
-    @ApiModelProperty(value = "用户ID", example = "1")
-    private Long id;
+    @ApiModelProperty(value = "用户ID", example = "101")
+    private Long userId;
 
-    @NotBlank(message = "手机号不能为空")
     @ApiModelProperty(value = "手机号", required = true)
     private String phone;
 
-    @NotBlank(message = "密码不能为空")
     @ApiModelProperty(value = "密码", required = true)
     private String password;
 
-    @ApiModelProperty(value = "用户角色", example = "CLIENT")
-    private String role;
+    @ApiModelProperty(value = "用户名")
+    private String username;
+
+    @ApiModelProperty(value = "头像路径")
+    private String avatar;
 
     @ApiModelProperty(value = "学号")
     private String studentId;
 
     @ApiModelProperty(value = "证件图片路径")
-    private String idCardImage;
+    private String certificate;
 
-    @ApiModelProperty(value = "认证状态")
-    private Boolean verified;
+    @ApiModelProperty(value = "用户角色", example = "0")
+    private String role;
 
     @ApiModelProperty(value = "创建时间")
-    private LocalDateTime createdTime;
+    private LocalDateTime createTime;
 
     @ApiModelProperty(value = "更新时间")
-    private LocalDateTime updatedTime;
+    private LocalDateTime updateTime;
 }
