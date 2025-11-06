@@ -29,7 +29,7 @@
         "./src/*"
       ]
     },
-    // 关键配置：启用 Vue 模板编译器
+    // 关键配置：启用 Vue 模板编译器n
     "typeRoots": ["node_modules/@types"],
     "baseUrl": "./",
     "allowSyntheticDefaultImports": true

@@ -20,13 +20,14 @@ const routes = [
     {
     path: '/help',
     name: 'Help',
-    component: () => import('../views/HelpView.vue')
+    component: () => import('../views/OrderList.vue')//直接跳到OrderList.vue  Jump directly to OrderList.vue
   },
     {
     path: '/my',
-    name: 'My',
-    component: () => import('../views/MyView.vue')
-  },
+    name: 'my',
+    component: () => import('../views/MyView.vue'),  
+    meta: { requiresAuth: true }
+},
   {
     path: '/login',
     name: 'Login',
@@ -49,6 +50,32 @@ const routes = [
     name: 'Register',
     component: () => import('../views/RegisterView.vue')
   },
+  //追加路由
+  {
+  path: '/order',
+  name: 'OrderList',
+  component: () => import('@/views/OrderList.vue'),
+  meta: { requiresAuth: true }
+},
+{
+  path: '/order/create',
+  name: 'OrderCreate',
+  component: () => import('@/views/OrderCreate.vue'),
+  meta: { requiresAuth: true }
+},
+{
+  path: '/order/pay/:id',
+  name: 'OrderPay',
+  component: () => import('@/views/OrderPay.vue'),
+  props: true,
+  meta: { requiresAuth: true }
+},
+{
+  path: '/wallet',
+  name: 'Wallet',
+  component: () => import('@/views/Wallet.vue'),
+  meta: { requiresAuth: true }
+}
 ]
 
 const router = createRouter({
