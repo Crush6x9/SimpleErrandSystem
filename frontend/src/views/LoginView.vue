@@ -1,5 +1,11 @@
 <template>
   <div class="login-container">
+    <van-nav-bar 
+      title="登录" 
+      left-text="返回" 
+      left-arrow 
+      @click-left="handleBack" 
+    />
     <!-- 背景图 -->
     <div class="background">
       <van-image src="/login-bg.png" height="100%" fit="cover" alt="背景" />
@@ -51,6 +57,11 @@ import { ref } from 'vue'
 import { useRouter,useRoute } from 'vue-router'
 import { Toast } from 'vant'
 import { login } from '@/utils/auth'
+
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -123,18 +134,11 @@ const handleLogin = async () => {
 
 .background {
   position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   z-index: 1;
 }
 
-/* .background img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-} */
 
 .login-form {
   position: absolute;

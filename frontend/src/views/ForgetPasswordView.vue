@@ -1,6 +1,11 @@
 <template>
   <div class="forget-container">
-   
+   <van-nav-bar 
+      title="忘记密码" 
+      left-text="返回" 
+      left-arrow 
+      @click-left="handleBack" 
+    />
     
     <div class="form-container">
       <h1 class="title">忘记密码</h1>
@@ -74,6 +79,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast } from 'vant'
+
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
 
 const router = useRouter()
 const phone = ref('')

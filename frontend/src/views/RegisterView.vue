@@ -1,5 +1,12 @@
 <template>
   <div class="register-container">
+    <van-nav-bar 
+      title="注册" 
+      left-text="返回" 
+      left-arrow 
+      @click-left="handleBack" 
+    />
+    <div class="register-child-container">
     <!-- 背景图 -->
     <div class="background">
       <van-image src="/register-bg.png" width="100%" fit="cover" alt="背景" />
@@ -77,6 +84,7 @@
         </van-button>
       </div>
     </van-dialog>
+    </div>
   </div>
 </template>
 
@@ -84,6 +92,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast, Dialog } from 'vant'
+
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
 
 const router = useRouter()
 const phone = ref('')
@@ -324,16 +337,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.register-container {
+
+.register-child-container{
+  overflow: hidden;
   position: relative;
-  min-height: 90vh;
+  height: 90vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .background {
-  position: absolute;
+    position: absolute;
+  width: 100%;
   height: 100%;
   z-index: 1;
 }

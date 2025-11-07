@@ -1,6 +1,11 @@
 <template>
   <div class="set-password-container">
-   
+   <van-nav-bar 
+      title="设置新密码" 
+      left-text="返回" 
+      left-arrow 
+      @click-left="handleBack" 
+    />
     <div class="form-container">
       <h1 class="title">设置新密码</h1>
       
@@ -51,6 +56,11 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute, type LocationQueryValue } from 'vue-router'
 import { Toast } from 'vant'
+
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
 
 const router = useRouter()
 const route = useRoute()

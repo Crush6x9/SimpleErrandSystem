@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { isAuthenticated } from '@/utils/auth'
+import { isAuthenticated, logout } from '@/utils/auth'
+import { Dialog, Toast } from 'vant'
 
 const router = useRouter()
 const isAuthenticatedRef = ref(false)
-
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
 // 检查登录状态
 onMounted(() => {
   isAuthenticatedRef.value = isAuthenticated()
@@ -15,17 +19,51 @@ onMounted(() => {
 const handleAuthClick = () => {
   router.push({ name: 'Login',query: { redirect: '/home' }  })
 }
+
+// 处理退出点击
+const handleLogout = () => {
+  Dialog.confirm({
+    title: '退出登录',
+    message: '确定要退出登录吗？',
+  }).then(() => {
+    logout()
+    isAuthenticatedRef.value = false
+    Toast('已退出登录')
+  }).catch(() => {
+    // 用户点击取消
+  })
+}
 </script>
 
 <template>
   <div class="home">
+        <van-nav-bar 
+      title="首页" 
+      left-text="返回" 
+      left-arrow 
+      @click-left="handleBack" 
+    />
     <div>
       <van-image width="100%" fit="cover" src="/home-img.png" />
     </div>
     <van-card class="home_card" desc="跑了个腿 Run A Leg" title="欢迎加入">
       <template #footer>
-        <!-- 根据登录状态显示按钮 -->
-        <van-button v-if="!isAuthenticatedRef" size="normal" @click="handleAuthClick">注册/登录</van-button>
+        <!-- 根据登录状态显示不同按钮 -->
+        <van-button 
+          v-if="!isAuthenticatedRef" 
+          size="normal" 
+          @click="handleAuthClick"
+        >
+          注册/登录
+        </van-button>
+        <van-button 
+          v-else 
+          size="normal" 
+          type="danger" 
+          @click="handleLogout"
+        >
+          退出
+        </van-button>
       </template>
     </van-card>
     <van-grid clickable :column-num="2">
@@ -35,7 +73,7 @@ const handleAuthClick = () => {
         
         <van-image width="100%" fit="cover" src="/give-a-hand.png" />
       </van-grid-item>
-      <van-grid-item to="/my" class="home_grid-item_ask">
+      <van-grid-item to="/help" class="home_grid-item_ask">
       <div class="home_grid-item_text"><h1>我要求助</h1><br>
         <h3>ask for help</h3></div>
         
@@ -46,7 +84,6 @@ const handleAuthClick = () => {
 </template>
 
 <style scoped>
-/* 保持原有样式不变 */
 .home_card {
   margin: 0;
 }

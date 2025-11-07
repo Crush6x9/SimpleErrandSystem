@@ -70,12 +70,28 @@ const routes = [
   props: true,
   meta: { requiresAuth: true }
 },
-{
-  path: '/wallet',
-  name: 'Wallet',
-  component: () => import('@/views/Wallet.vue'),
-  meta: { requiresAuth: true }
-}
+//“我的”页面相关
+// {
+//   path: '/wallet',
+//   name: 'Wallet',
+//   component: () => import('@/views/Wallet.vue'),
+//   meta: { requiresAuth: true }
+// }
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/ProfileView.vue')
+  },
+  {
+    path: '/wallet',
+    name: 'Wallet',
+    component: () => import('../views/WalletView.vue')
+  },
+  // {
+  //   path: '/orders',
+  //   name: 'Orders',
+  //   component: () => import('../views/OrdersView.vue')
+  // }
 ]
 
 const router = createRouter({

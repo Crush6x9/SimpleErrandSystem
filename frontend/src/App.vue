@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import TheHeader from '@/components/TheHeader.vue';
+// import TheHeader from '@/components/TheHeader.vue';
 import TheFooter from '@/components/TheFooter.vue';
 </script>
 
 <template>
   <div id="app" class="page-container">
-    <TheHeader/>
+    <!-- <TheHeader/> -->
     
     <div class="app-content">
       <router-view />

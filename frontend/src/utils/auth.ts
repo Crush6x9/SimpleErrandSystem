@@ -1,4 +1,5 @@
-
+// 登录管理
+// src/utils/auth.ts
 /**
  * 检查用户是否已登录
  * @returns boolean 是否已登录
