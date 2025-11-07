@@ -30,7 +30,7 @@ git clone https://github.com/Crush6x9/SimpleErrandSystem.git
 ## 稳定的克隆/拉取方法
 
 ```bash
-打开命令提示符CMD运行：
+# 打开命令提示符CMD运行：
 
 bashssh-keygen -t ed25519 -C "你的邮箱@example.com"
 
@@ -53,7 +53,7 @@ SHA256:8k4y6WPPMqI5IRyp8cy3h7z2IlEcEBoCkGHIQPwf40w 你的邮箱@example.com
 
 看到这个指纹，说明生成成功
 
-打开公钥文件并复制内容：
+# 打开公钥文件并复制内容：
 
 bashnotepad %USERPROFILE%\.ssh\id_ed25519.pub
 
@@ -72,7 +72,7 @@ Key type: 默认 Authentication Key
 Key: 粘贴你复制的内容
 点击 Add SSH key
 
-最后验证是否成功
+# 最后验证是否成功
 还是进入CMD输入：
 
 ssh -T git@github.com
