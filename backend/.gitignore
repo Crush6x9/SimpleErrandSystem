@@ -19,7 +19,7 @@ target/
 *.iml
 *.ipr
 /backend/.idea/
-/backend/.classpath
+/backend/target/
 /backend/.project
 /backend/.settings/
 /backend/logs/

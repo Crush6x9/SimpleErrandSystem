@@ -47,3 +47,9 @@ logging:
   # 文件路径
   file:
     name: logs/errandSystem-dev.log
+
+# JWT令牌配置
+jwt:
+  secret: errandSystemSecretKey2025ForSimpleErrandApplication
+  expiration: 86400000    # 24小时
+  refresh-expiration: 604800000  # 7天
