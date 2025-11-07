@@ -1,8 +1,6 @@
 package com.errand.controller;
 
-import com.errand.dto.LoginRequest;
-import com.errand.dto.RegisterRequest;
-import com.errand.dto.Result;
+import com.errand.dto.*;
 import com.errand.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +28,17 @@ public class AuthController {
     @ApiOperation("用户登录")
     public Result login(@RequestBody @Valid LoginRequest request) {
         return userService.login(request);
+    }
+
+    @PostMapping("/forget-password/check")
+    @ApiOperation("验证手机号是否存在")
+    public Result checkPhoneExists(@RequestBody @Valid ForgetPasswordRequest request) {
+        return userService.checkPhoneExists(request);
+    }
+
+    @PostMapping("/forget-password/reset")
+    @ApiOperation("重置密码")
+    public Result resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        return userService.resetPassword(request);
     }
 }

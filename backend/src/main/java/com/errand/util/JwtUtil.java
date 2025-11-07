@@ -1,12 +1,13 @@
 package com.errand.util;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,10 +54,11 @@ public class JwtUtil {
     public String generateToken(Long userId, String phone, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_KEY_USERID, userId);
+        claims.put(CLAIM_KEY_PHONE, phone);
         claims.put(CLAIM_KEY_ROLE, role);
         claims.put(CLAIM_KEY_CREATED, new Date());
 
-        return generateToken(claims, phone, expiration);
+        return generateToken(claims, expiration);
     }
 
     /**
@@ -65,27 +67,12 @@ public class JwtUtil {
     public String generateRefreshToken(Long userId, String phone, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_KEY_USERID, userId);
+        claims.put(CLAIM_KEY_PHONE, phone);
         claims.put(CLAIM_KEY_ROLE, role);
         claims.put(CLAIM_KEY_CREATED, new Date());
         claims.put("type", "refresh");
 
-        return generateToken(claims, phone, refreshExpiration);
-    }
-
-    /**
-     * 生成令牌
-     */
-    private String generateToken(Map<String, Object> claims, String subject, Long expiration) {
-        Date createdDate = new Date();
-        Date expirationDate = new Date(createdDate.getTime() + expiration);
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(createdDate)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS256, secret)
-                .compact();
+        return generateToken(claims, refreshExpiration);
     }
 
     /**
@@ -158,7 +145,10 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            getClaimsFromToken(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
             logger.error("令牌已过期: {}", e.getMessage());
@@ -210,12 +200,37 @@ public class JwtUtil {
     }
 
     /**
+     * 生成令牌
+     */
+    private String generateToken(Map<String, Object> claims, Long expiration) {
+        Date createdDate = new Date();
+        Date expirationDate = new Date(createdDate.getTime() + expiration);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject((String) claims.get(CLAIM_KEY_PHONE))
+                .setIssuedAt(createdDate)
+                .setExpiration(expirationDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    /**
      * 从令牌中获取声明
      */
     private Claims getClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secret)
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    /**
+     * 获取签名密钥
+     */
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = secret.getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
