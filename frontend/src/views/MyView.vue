@@ -29,6 +29,11 @@ const checkAuthStatus = () => {
   }
 }
 
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
+
 // 加载用户数据
 const loadUserData = async () => {
   try {
@@ -47,7 +52,7 @@ const loadUserData = async () => {
         receivedOrders: 5,
         postedOrders: 3,
         earnings: 150.50,
-       好评: 4,
+        好评: 4,
         差评: 1,
         totalEarnings: 200.50,
         withdrawableBalance: 150.50
@@ -103,11 +108,6 @@ const handleDataItemClick = (type: string) => {
 const handleContactClick = () => {
   showContactDialog.value = true
 }
-
-// 预览头像
-// const previewAvatar = () => {
-//   ImagePreview([user.value.avatar])
-// }
 </script>
 
 <template>

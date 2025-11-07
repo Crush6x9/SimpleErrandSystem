@@ -4,7 +4,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast, Uploader, Dialog } from 'vant'
-import { isAuthenticated } from '@/utils/auth'
+import { isAuthenticated, getUserPhone } from '@/utils/auth'
 import { getUser, updateUser } from '@/utils/user'
 
 const router = useRouter()
@@ -12,6 +12,10 @@ const isAuth = ref(false)
 const user = ref(getUser())
 const newStudentId = ref('')
 const showStudentIdEdit = ref(false)
+const newPhone = ref('')
+const showPhoneEdit = ref(false)
+const newNickname = ref('')
+const showNicknameEdit = ref(false)
 const newProof = ref('')
 const isUploading = ref(false)
 const avatarFile = ref<File | null>(null)
@@ -40,6 +44,8 @@ const loadUserData = async () => {
     await new Promise((resolve) => setTimeout(resolve, 300))
     
     user.value = getUser()
+    // 初始化表单数据
+    newPhone.value = user.value.phone || getUserPhone() || ''
   } catch (error) {
     Toast('加载用户数据失败')
   }
@@ -50,23 +56,53 @@ const handleBack = () => {
   router.back()
 }
 
+
 // 处理头像上传
-const handleAvatarUpload = (file: File) => {
-  avatarFile.value = file
-  isUploading.value = true
+const handleAvatarUpload = (file: any) => {
+  // Vant Uploader 的 after-read 返回的是包含 file 属性的对象
+  if (file && file.file) {
+    avatarFile.value = file.file
+    isUploading.value = true
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64String = e.target?.result as string
+      
+      // 更新用户头像
+      const updatedUser = updateUser({ avatar: base64String })
+      user.value = updatedUser
+      
+      isUploading.value = false
+      Toast('头像上传成功')
+    }
+    reader.onerror = () => {
+      isUploading.value = false
+      Toast('头像上传失败，请重试')
+    }
+    reader.readAsDataURL(file.file)
+  } else {
+    Toast('文件上传失败，请重试')
+  }
+}
+
+
+// 处理昵称点击
+const handleNicknameClick = () => {
+  newNickname.value = user.value.nickname
+  showNicknameEdit.value = true
+}
+
+// 保存昵称
+const saveNickname = () => {
+  if (!newNickname.value.trim()) {
+    Toast('昵称不能为空')
+    return
+  }
   
-  // 模拟上传过程
-  setTimeout(() => {
-    // 生成预览URL
-    const previewUrl = URL.createObjectURL(file)
-    
-    // 更新用户头像
-    const updatedUser = updateUser({ avatar: previewUrl })
-    user.value = updatedUser
-    
-    isUploading.value = false
-    Toast('头像上传成功')
-  }, 800)
+  const updatedUser = updateUser({ nickname: newNickname.value.trim() })
+  user.value = updatedUser
+  showNicknameEdit.value = false
+  Toast('昵称更新成功')
 }
 
 // 处理学号点击
@@ -94,11 +130,60 @@ const saveStudentId = () => {
   Toast('学号更新成功')
 }
 
+// 处理手机号点击
+const handlePhoneClick = () => {
+  newPhone.value = user.value.phone || getUserPhone() || ''
+  showPhoneEdit.value = true
+}
+
+// 保存手机号
+const savePhone = () => {
+  if (!newPhone.value.trim()) {
+    Toast('手机号不能为空')
+    return
+  }
+  
+  // 验证手机号格式
+  if (!/^1[3-9]\d{9}$/.test(newPhone.value.trim())) {
+    Toast('请输入有效的手机号')
+    return
+  }
+  
+  const updatedUser = updateUser({ phone: newPhone.value.trim() })
+  user.value = updatedUser
+  showPhoneEdit.value = false
+  Toast('手机号更新成功')
+}
+
+// 处理证明上传
+// const handleProofUpload = (file: any) => {
+//   // Vant Uploader 的 after-read 返回的是包含 file 属性的对象
+//   if (file && file.file) {
+//     const reader = new FileReader()
+//     reader.onload = (e) => {
+//       const base64String = e.target?.result as string
+//       newProof.value = base64String
+      
+//       // 保存证明到用户数据
+//       const updatedUser = updateUser({ proof: base64String })
+//       user.value = updatedUser
+      
+//       Toast('证明文件上传成功')
+//     }
+//     reader.onerror = () => {
+//       Toast('证明文件上传失败，请重试')
+//     }
+//     reader.readAsDataURL(file.file)
+//   } else {
+//     Toast('文件上传失败，请重试')
+//   }
+// }
 // 处理证明上传
 const handleProofUpload = (file: File) => {
   newProof.value = URL.createObjectURL(file)
   Toast('证明文件上传成功')
 }
+
 
 // 提交修改
 const handleSubmit = () => {
@@ -106,7 +191,16 @@ const handleSubmit = () => {
     title: '确认提交',
     message: '确认提交个人信息修改？',
   }).then(() => {
-    // 模拟提交
+    // 保存所有修改到用户数据
+    const updatedData = {
+      avatar: user.value.avatar,
+      nickname: user.value.nickname,
+      studentId: user.value.studentId,
+      phone: user.value.phone,
+      proof: newProof.value || user.value.proof
+    }
+    
+    updateUser(updatedData)
     Toast('个人信息提交成功')
     router.back()
   }).catch(() => {
@@ -160,25 +254,26 @@ const handleCancel = () => {
       
       <!-- 个人信息 -->
       <van-cell-group inset>
-        <van-cell 
-          title="昵称" 
-          :value="user.nickname" 
-          is-link 
-          @click="() => $router.push({ name: 'My' })"
-        />
-        <van-cell 
-          title="学号" 
-          :value="user.studentId" 
-          is-link 
-          @click="handleStudentIdClick"
-        />
-        <van-cell 
-          title="手机号" 
-          :value="user.phone || '未绑定'" 
-          is-link 
-          :border="false"
-        />
-      </van-cell-group>
+  <van-cell 
+    title="昵称" 
+    :value="user.nickname" 
+    is-link 
+    @click="handleNicknameClick"
+  />
+  <van-cell 
+    title="学号" 
+    :value="user.studentId" 
+    is-link 
+    @click="handleStudentIdClick"
+  />
+  <van-cell 
+    title="手机号" 
+    :value="user.phone || '未绑定'" 
+    is-link 
+    :border="false"
+    @click="handlePhoneClick"
+  />
+</van-cell-group>
       
       <!-- 上传证明 -->
       <van-cell-group inset>
@@ -212,6 +307,7 @@ const handleCancel = () => {
       position="bottom" 
       :style="{ height: '30%' }"
       round
+      class="popup"
     >
       <div class="student-id-edit">
         <h3>修改学号</h3>
@@ -228,6 +324,54 @@ const handleCancel = () => {
         </div>
       </div>
     </van-popup>
+    <!-- 昵称编辑浮窗 -->
+<van-popup 
+  v-model:show="showNicknameEdit" 
+  position="bottom" 
+  :style="{ height: '30%' }"
+  round
+  class="popup"
+>
+  <div class="nickname-edit">
+    <h3>修改昵称</h3>
+    <van-field 
+      v-model="newNickname" 
+      placeholder="请输入新昵称" 
+      maxlength="10"
+      clearable
+    />
+    <p class="hint">昵称最多10个字符</p>
+    <div class="edit-actions">
+      <van-button type="default" @click="showNicknameEdit = false">取消</van-button>
+      <van-button type="primary" @click="saveNickname">确定</van-button>
+    </div>
+  </div>
+</van-popup>
+
+<!-- 手机号编辑浮窗 -->
+<van-popup 
+  v-model:show="showPhoneEdit" 
+  position="bottom" 
+  :style="{ height: '30%' }"
+  round
+  class="popup"
+>
+  <div class="phone-edit">
+    <h3>绑定手机号</h3>
+    <van-field 
+      v-model="newPhone" 
+      type="tel"
+      placeholder="请输入手机号" 
+      maxlength="11"
+      clearable
+    />
+    <p class="hint">请输入11位手机号码</p>
+    <div class="edit-actions">
+      <van-button type="default" @click="showPhoneEdit = false">取消</van-button>
+      <van-button type="primary" @click="savePhone">确定</van-button>
+    </div>
+  </div>
+</van-popup>
   </div>
 </template>
 
@@ -312,5 +456,26 @@ const handleCancel = () => {
 
 .edit-actions .van-button {
   width: 45%;
+}
+.phone-edit {
+  padding: 20px;
+  height: 100%;
+}
+
+.phone-edit h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.nickname-edit {
+  padding: 20px;
+  height: 100%;
+}
+
+.nickname-edit h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 18px;
 }
 </style>
