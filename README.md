@@ -25,7 +25,11 @@ git clone https://github.com/Crush6x9/SimpleErrandSystem.git
 
 这条命令会在当前目录下自动新建一个叫 SimpleErrandSystem 的文件夹，并把整个项目拉下来
 
-# 稳定的克隆/拉取方法
+```
+
+## 稳定的克隆/拉取方法
+
+```bash
 打开命令提示符CMD运行：
 
 bashssh-keygen -t ed25519 -C "你的邮箱@example.com"
