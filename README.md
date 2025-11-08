@@ -32,21 +32,21 @@ git clone https://github.com/Crush6x9/SimpleErrandSystem.git
 ```bash
 # 打开命令提示符CMD运行：
 
-bashssh-keygen -t ed25519 -C "你的邮箱@example.com"
+ssh-keygen -t ed25519 -C "你的邮箱@example.com"
 
 按提示操作：
 
-textGenerating public/private ed25519 key pair.
+Generating public/private ed25519 key pair.
 Enter file in which to save the key (C:\Users\你的用户名\.ssh\id_ed25519):
 
 直接回车 → 默认保存到 C:\Users\你的用户名\.ssh\id_ed25519
 
-textEnter passphrase (empty for no passphrase):
+Enter passphrase (empty for no passphrase):
 Enter same passphrase again:
 
 建议直接回车两次（不设密码），方便使用；如果设了密码每次 git 都要输，麻烦
 
-textYour identification has been saved in ...
+Your identification has been saved in ...
 Your public key has been saved in ...id_ed25519.pub
 The key fingerprint is:
 SHA256:8k4y6WPPMqI5IRyp8cy3h7z2IlEcEBoCkGHIQPwf40w 你的邮箱@example.com
@@ -55,12 +55,12 @@ SHA256:8k4y6WPPMqI5IRyp8cy3h7z2IlEcEBoCkGHIQPwf40w 你的邮箱@example.com
 
 # 打开公钥文件并复制内容：
 
-bashnotepad %USERPROFILE%\.ssh\id_ed25519.pub
+notepad %USERPROFILE%\.ssh\id_ed25519.pub
 
 
 打开后全选（Ctrl+A）→ 复制（Ctrl+C）
 内容长这样：
-textssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... 你的邮箱@example.com
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... 你的邮箱@example.com
 
 打开浏览器 → 登录 GitHub
 
@@ -79,7 +79,7 @@ ssh -T git@github.com
 
 成功提示：
 
-textHi 用户名! You've successfully authenticated, but GitHub does not provide shell access.
+Hi 用户名! You've successfully authenticated, but GitHub does not provide shell access.
 
 第一次可能提示 Are you sure you want to continue connecting? → 输入 yes 回车
 
