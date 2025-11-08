@@ -30,10 +30,13 @@ const route = useRoute()
 const amount = ref('0.00')
 
 onMounted(() => {
-    // 如果有传递金额参数，使用参数中的金额
-    if (route.query.amount) {
-        amount.value = route.query.amount as string
-    }
+  // 如果有传递金额参数，使用参数中的金额
+  if (route.query.amount) {
+    amount.value = route.query.amount as string
+  } else {
+    // 默认金额
+    amount.value = '0.00'
+  }
 })
 
 const handleBack = () => {

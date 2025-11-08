@@ -96,9 +96,29 @@ const handleStudentIdClick = () => {
 }
 
 // 处理数据项点击
+// const handleDataItemClick = (type: string) => {
+//   if (type === 'earnings') {
+//     router.push({ name: 'Wallet' })
+//   } else {
+//     Toast(`查看${type}详情`)
+//   }
+// }
+// 处理数据项点击
 const handleDataItemClick = (type: string) => {
   if (type === 'earnings') {
     router.push({ name: 'Wallet' })
+  } else if (type === 'receivedOrders') {
+    // 跳转到全部订单页面，并指定显示"我帮助的"标签页
+    router.push({ 
+      path: '/help',  // 使用正确的路径
+      query: { tab: 'helping' } 
+    })
+  } else if (type === 'postedOrders') {
+    // 跳转到全部订单页面，并指定显示"我发布的"标签页
+    router.push({ 
+      path: '/help',  // 使用正确的路径
+      query: { tab: 'mine' } 
+    })
   } else {
     Toast(`查看${type}详情`)
   }
@@ -290,8 +310,8 @@ const handleContactClick = () => {
   /* border: 1px solid #666; */
   margin: 1px;
   height: 120px;
-  background-color: #FF9900;
-  color: #333;
+  background-color: #9ae9ff;
+  color: #666;
 }
 .stat-item--earning{
   flex: 2;
@@ -302,7 +322,7 @@ const handleContactClick = () => {
 margin: 1px;
   height: 120px;
   background-color: #666;
-  color: #FF9900;
+  color: #9ae9ff;
 }
 .stat-value {
   font-size: 24px;
@@ -344,7 +364,7 @@ margin: 1px;
   margin: 0 1px;
 }
 .rating-item--good{
-  background-color: #FF9900;
+  background-color: #9ae9ff;
 }
 .rating-item--bad{
   background-color: #666;
