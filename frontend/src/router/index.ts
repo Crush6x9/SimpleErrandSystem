@@ -4,6 +4,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 // 使用动态导入，实现懒加载
 const routes = [
   {
+    path: '/help',
+    name: 'AllOrders',
+    component: () => import('@/views/AllOrders.vue')
+  },
+  {
     path: '/',
     redirect: '/home'
   },
@@ -17,11 +22,7 @@ const routes = [
     name: 'About',
     component: () => import('../views/AboutView.vue')
   },
-    {
-    path: '/help',
-    name: 'Help',
-    component: () => import('../views/OrderList.vue')//直接跳到OrderList.vue  Jump directly to OrderList.vue
-  },
+    
     {
     path: '/my',
     name: 'my',
@@ -69,6 +70,18 @@ const routes = [
   component: () => import('@/views/OrderPay.vue'),
   props: true,
   meta: { requiresAuth: true }
+},
+// 添加这两条
+{
+  path: '/help',
+  name: 'AllOrders',
+  component: () => import('@/views/AllOrders.vue')
+},
+{
+  path: '/order/detail/:id',
+  name: 'OrderDetail',
+  component: () => import('@/views/OrderDetail.vue'),
+  props: true
 },
 //“我的”页面相关
   {
