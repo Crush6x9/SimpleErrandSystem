@@ -17,6 +17,20 @@
       </div>
     </div>
 
+
+<div class="publish-section">
+  <van-button 
+    round 
+    block 
+    type="danger" 
+    size="large" 
+    icon="plus" 
+    @click="handlePublish"
+    class="publish-btn"
+  >
+    <span class="btn-text">发布跑腿订单</span>
+  </van-button>
+</div>
     <div class="content">
       <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
         <van-list
@@ -57,6 +71,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+
+//模拟登录状态（队友写的 token 就用这个）
+const isLoggedIn = () => {
+  return localStorage.getItem('token') || localStorage.getItem('userInfo')
+}
+
+// 发布按钮点击事件
+const handlePublish = () => {
+  if (isLoggedIn()) {
+    router.push('/order/create')  // 已登录 → 跳发布表单
+  } else {
+    router.push('/login')         // 未登录 → 跳登录页
+  }
+}
 
 const router = useRouter()
 
