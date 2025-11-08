@@ -301,7 +301,7 @@ const handleContactClick = () => {
   justify-content: center;
 margin: 1px;
   height: 120px;
-  background-color: #333;
+  background-color: #666;
   color: #FF9900;
 }
 .stat-value {
@@ -347,7 +347,7 @@ margin: 1px;
   background-color: #FF9900;
 }
 .rating-item--bad{
-  background-color: #333;
+  background-color: #666;
 }
 .rating-img{
   margin:20px 0 0 30px;
