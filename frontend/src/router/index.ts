@@ -71,12 +71,6 @@ const routes = [
   meta: { requiresAuth: true }
 },
 //“我的”页面相关
-// {
-//   path: '/wallet',
-//   name: 'Wallet',
-//   component: () => import('@/views/Wallet.vue'),
-//   meta: { requiresAuth: true }
-// }
   {
     path: '/profile',
     name: 'Profile',
@@ -92,7 +86,24 @@ const routes = [
   //   name: 'Orders',
   //   component: () => import('../views/OrdersView.vue')
   // }
+  //订单完成结算、评价页面
+{
+  // path: '/order/complete/:id',
+  path: '/order-complete',
+  name: 'OrderComplete',
+  component: () => import('../views/OrderComplete.vue'),
+  props: true
+},
+{
+  // path: '/order/rate/:id',
+  path: '/order-rate',
+  name: 'OrderRate',
+  component: () => import('../views/OrderRate.vue'),
+  props: true
+},
+
 ]
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

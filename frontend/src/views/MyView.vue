@@ -146,7 +146,7 @@ const handleContactClick = () => {
         <div class="stat-value">{{ user.postedOrders }}</div>
         <div class="stat-label">已发订单</div>
       </div>
-      <div class="stat-item" @click="handleDataItemClick('earnings')">
+      <div class="stat-item--earning" @click="handleDataItemClick('earnings')">
         <div class="stat-value">¥{{ user.earnings.toFixed(2) }}</div>
         <div class="stat-label">收益 ></div>
       </div>
@@ -243,7 +243,7 @@ const handleContactClick = () => {
   height: 70px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #1989fa;
+  border: 2px solid #333;
   background-color: #f5f5f5;
   margin-bottom: 10px;
 }
@@ -290,12 +290,22 @@ const handleContactClick = () => {
   /* border: 1px solid #666; */
   margin: 1px;
   height: 120px;
-  background-color: #7C7C7C;
-  color: #fff;
+  background-color: #FF9900;
+  color: #333;
 }
-
+.stat-item--earning{
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+margin: 1px;
+  height: 120px;
+  background-color: #333;
+  color: #FF9900;
+}
 .stat-value {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
   /* color: #333; */
   margin-bottom: 5px;
@@ -331,15 +341,16 @@ const handleContactClick = () => {
   border-radius: 20px;
   font-family: STHupo;
   color: #fff;
+  margin: 0 1px;
 }
 .rating-item--good{
-  background-color: #D2E186;
+  background-color: #FF9900;
 }
 .rating-item--bad{
-  background-color: #7C7C7C;
+  background-color: #333;
 }
 .rating-img{
-  margin:10px 0 0 25px;
+  margin:20px 0 0 30px;
   /* padding: 0 0 0 30px; */
 }
 .rating-label {
@@ -348,8 +359,8 @@ const handleContactClick = () => {
 }
 
 .rating-value {
-  font-size: 70px;
-  margin: 20px 0 0;
+  font-size: 80px;
+  margin: 10px 0 0;
 }
 
 .nickname-edit {
