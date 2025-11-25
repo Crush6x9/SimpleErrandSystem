@@ -18,11 +18,11 @@ target/
 *.iws
 *.iml
 *.ipr
-/backend/.idea/
-/backend/target/
-/backend/.project
-/backend/.settings/
-/backend/logs/
+
+target
+.project
+.settings
+logs
 
 ### NetBeans ###
 /nbproject/private/
