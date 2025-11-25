@@ -107,6 +107,22 @@
         </where>
     </select>
 
+    <select id="countAllOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order`
+    </select>
+
+    <select id="countAvailableOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order` WHERE status = '0'
+    </select>
+
+    <select id="countUserPublishedOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order` WHERE client_id = #{userId}
+    </select>
+
+    <select id="countUserAcceptedOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order` WHERE helper_id = #{userId}
+    </select>
+
     <select id="selectAvailableOrders" resultMap="OrderResultMap">
         SELECT o.*,
                u1.username as client_username,
@@ -129,8 +145,32 @@
         SELECT COUNT(*) FROM `order` WHERE helper_id = #{userId} AND status = '2'
     </select>
 
-    <delete id="deleteOrder" parameterType="Long">
-        DELETE FROM `order` WHERE order_id = #{orderId}
-    </delete>
+    <select id="selectTodayIncome" parameterType="Long" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(reward), 0)
+        FROM `order`
+        WHERE helper_id = #{userId}
+          AND status = '2'
+          AND DATE(complete_time) = CURDATE()
+    </select>
+
+    <select id="selectBillListByUserId" resultType="com.errand.dto.BillDTO$BillItem">
+        SELECT
+            order_id as orderId,
+            reward as income,
+            complete_time as completeTime,
+            content
+        FROM `order`
+        WHERE helper_id = #{userId}
+          AND status = '2'
+        ORDER BY complete_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countBillListByUserId" parameterType="Long" resultType="Long">
+        SELECT COUNT(*)
+        FROM `order`
+        WHERE helper_id = #{userId}
+          AND status = '2'
+    </select>
 
 </mapper>
