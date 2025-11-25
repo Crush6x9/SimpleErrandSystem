@@ -11,11 +11,14 @@ public interface OrderService {
 
     Result completeOrder(Long userId, Long orderId);
 
+    Result cancelOrder(Long orderId, Long userId);
+
+    Result cancelAcceptOrder(Long orderId, Long userId);
+    Result getOrderStats(Long userId);
+
     Result getOrderList(OrderQueryRequest request, Long userId);
 
     Result getOrderDetail(Long orderId, Long userId);
-
-    Result cancelOrder(Long orderId, Long userId);
 
     Result getAvailableOrders();
 }

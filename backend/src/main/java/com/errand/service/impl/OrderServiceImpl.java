@@ -1,9 +1,6 @@
 package com.errand.service.impl;
 
-import com.errand.dto.OrderInfo;
-import com.errand.dto.OrderQueryRequest;
-import com.errand.dto.OrderRequest;
-import com.errand.dto.Result;
+import com.errand.dto.*;
 import com.errand.entity.Order;
 import com.errand.mapper.EvaluationMapper;
 import com.errand.mapper.OrderMapper;
@@ -32,9 +29,6 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private WalletService walletService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
     @Override
     @Transactional
     public Result publishOrder(Long clientId, OrderRequest request) {
@@ -47,7 +41,6 @@ public class OrderServiceImpl implements OrderService {
             order.setReward(request.getReward());
             order.setStatus("0");
             order.setPublishTime(LocalDateTime.now());
-
             int result = orderMapper.insertOrder(order);
             if (result > 0) {
                 return Result.success("订单发布成功", order.getOrderId());
@@ -147,7 +140,8 @@ public class OrderServiceImpl implements OrderService {
                 return Result.error("只能取消待帮助的订单");
             }
 
-            int result = orderMapper.deleteOrder(orderId);
+            order.setStatus("3");
+            int result = orderMapper.updateOrder(order);
             if (result > 0) {
                 return Result.success("订单取消成功");
             } else {
@@ -159,6 +153,53 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    public Result cancelAcceptOrder(Long orderId, Long userId) {
+        try {
+            Order order = orderMapper.selectOrderById(orderId);
+            if (order == null) {
+                return Result.error("订单不存在");
+            }
+
+            // 只有接取者可以取消接单
+            if (!order.getHelperId().equals(userId)) {
+                return Result.error("无权取消此订单");
+            }
+
+            order.setStatus("0");
+            int result = orderMapper.updateOrder(order);
+            if (result > 0) {
+                return Result.success("取消接单成功");
+            } else {
+                return Result.error("取消接单失败");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("取消接单异常", e);
+        }
+    }
+
+    @Override
+    public Result getOrderStats(Long userId) {
+        try {
+            Long totalOrders = orderMapper.countAllOrders();
+            Long availableOrders = orderMapper.countAvailableOrders();
+            Long myPublishedOrders = orderMapper.countPublishedOrders(userId);
+            Long myAcceptedOrders = orderMapper.countAcceptedOrders(userId);
+
+            OrderStats stats = new OrderStats(
+                totalOrders,
+                availableOrders,
+                myPublishedOrders,
+                myAcceptedOrders
+            );
+
+            return Result.success("获取订单统计成功", stats);
+        } catch (Exception e) {
+            return Result.error("获取订单统计失败");
+        }
+    }
+
+    @Override
     public Result getOrderList(OrderQueryRequest request, Long userId) {
         try {
             List<Order> orders = orderMapper.selectOrdersByCondition(request, userId);
@@ -166,7 +207,7 @@ public class OrderServiceImpl implements OrderService {
 
             // 添加分页信息
             int total = orderMapper.countOrdersByCondition(request, userId);
-            OrderListResponse response = new OrderListResponse();
+            OrderResponse response = new OrderResponse();
             response.setOrders(orderInfos);
             response.setTotal(total);
             response.setPage(request.getPage());

@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EvaluationServiceImpl implements EvaluationService {
@@ -74,12 +76,20 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     @Override
-    public Result getHelperEvaluations(Long helperId) {
+    public Result getHelperEvaluationStats(Long helperId) {
         try {
-            List<Evaluation> evaluations = evaluationMapper.selectEvaluationsByHelperId(helperId);
-            return Result.success("获取跑腿员评价成功", evaluations);
+            // 获取好评数量
+            Integer positiveCount = evaluationMapper.countEvaluationsByHelperIdAndReview(helperId, "1");
+            // 获取差评数量
+            Integer negativeCount = evaluationMapper.countEvaluationsByHelperIdAndReview(helperId, "0");
+
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("positiveCount", positiveCount != null ? positiveCount : 0);
+            stats.put("negativeCount", negativeCount != null ? negativeCount : 0);
+
+            return Result.success("获取评价统计成功", stats);
         } catch (Exception e) {
-            return Result.error("获取跑腿员评价失败");
+            return Result.error("获取评价统计失败");
         }
     }
 }

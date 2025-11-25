@@ -2,6 +2,9 @@ package com.errand.mapper;
 
 import com.errand.entity.Evaluation;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 @Mapper
 public interface EvaluationMapper {
@@ -28,4 +31,9 @@ public interface EvaluationMapper {
      * @return 评价状态
      */
     boolean existsEvaluationByOrderId(Long orderId);
+
+    // 统计跑腿员的好评/差评数量
+    Integer countEvaluationsByHelperIdAndReview(
+            @Param("helperId") Long helperId,
+            @Param("review") String review);
 }

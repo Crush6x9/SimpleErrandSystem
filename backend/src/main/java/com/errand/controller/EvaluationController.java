@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-@Api(tags = {"评价"})
+@Api(tags = {"评价操作"})
 @RestController
 @RequestMapping("/api/evaluations")
 public class EvaluationController {
@@ -27,7 +27,7 @@ public class EvaluationController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId,
             @RequestBody @Valid EvaluationRequest request) {
-        Long userId = jwtUtil.getUserIdFromToken(token.replace("Bearer ", ""));
+        Long userId = jwtUtil.getUserIdFromToken(token);
         return evaluationService.createEvaluation(orderId, userId, request);
     }
 
@@ -37,9 +37,9 @@ public class EvaluationController {
         return evaluationService.getEvaluationByOrderId(orderId);
     }
 
-    @GetMapping("/helper/{helperId}")
-    @ApiOperation("获取跑腿员的评价列表")
-    public Result getHelperEvaluations(@PathVariable Long helperId) {
-        return evaluationService.getHelperEvaluations(helperId);
+    @GetMapping("/{userId}/stats")
+    @ApiOperation("获取跑腿员的评价统计")
+    public Result getHelperEvaluationStats(@PathVariable Long userId) {
+        return evaluationService.getHelperEvaluationStats(userId);
     }
 }

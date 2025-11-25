@@ -8,5 +8,5 @@ public interface EvaluationService {
 
     Result getEvaluationByOrderId(Long orderId);
 
-    Result getHelperEvaluations(Long helperId);
+    Result getHelperEvaluationStats(Long helperId);
 }

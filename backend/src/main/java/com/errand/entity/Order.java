@@ -47,4 +47,10 @@ public class Order {
 
     @ApiModelProperty(value = "跑腿员用户名")
     private String helperUsername;
+
+    @ApiModelProperty(value = "委托人头像路径")
+    private String clientAvatar;
+
+    @ApiModelProperty(value = "跑腿员头像路径")
+    private String helperAvatar;
 }
