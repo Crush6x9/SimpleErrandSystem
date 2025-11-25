@@ -153,7 +153,7 @@
           AND DATE(complete_time) = CURDATE()
     </select>
 
-    <select id="selectBillListByUserId" resultType="com.errand.dto.BillDTO$BillItem">
+    <select id="selectBillListByUserId" resultType="com.errand.dto.BillInfo">
         SELECT
             order_id as orderId,
             reward as income,
