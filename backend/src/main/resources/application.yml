@@ -22,8 +22,8 @@ spring:
   # MySQL数据源、账户、密码
   datasource:
     url: jdbc:mysql://localhost:3306/errand
-    username: root
-    password: Liuminshu-2002
+    username: root  # 根据本地账户更改
+    password: 123456  # 根据本地账户更改
   # 文件上传限制
   servlet:
     multipart:
