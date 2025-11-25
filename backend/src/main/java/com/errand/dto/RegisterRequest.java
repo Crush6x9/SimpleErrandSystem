@@ -20,8 +20,14 @@ public class RegisterRequest {
     @Size(min = 6, max = 20, message = "密码长度6-20位")
     private String password;
 
-    public RegisterRequest(String phone, String password) {
+    @ApiModelProperty(value = "验证码", required = true)
+    @NotBlank(message = "验证码不能为空")
+    @Size(min = 6, max = 6, message = "验证码必须为6位")
+    private String verifyCode;
+
+    public RegisterRequest(String phone, String password, String verifyCode) {
         this.phone = phone;
         this.password = password;
+        this.verifyCode = verifyCode;
     }
 }
