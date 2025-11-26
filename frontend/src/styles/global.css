@@ -3,7 +3,6 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* 禁止用户缩放文本（小程序兼容） */
   -webkit-text-size-adjust: 100%;
 }
 
