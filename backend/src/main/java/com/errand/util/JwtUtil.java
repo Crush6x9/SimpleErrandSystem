@@ -14,20 +14,19 @@ import java.util.Map;
 
 @Component
 public class JwtUtil {
-    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtil.class);
 
-    // 默认密钥，生产环境应该从配置文件中读取
-    @Value("${jwt.secret:errandSystemSecretKey2025ForSimpleErrandApplication}")
+    // 默认密钥
+    @Value("${jwt.secret}")
     private String secret;
 
-    // 获取过期时间的方法
-    // 默认过期时间：24小时
+    // 访问令牌过期时间：30分钟
     @Getter
-    @Value("${jwt.expiration:86400000}")
+    @Value("${jwt.expiration}")
     private Long expiration;
 
     // 刷新令牌过期时间：7天
-    @Value("${jwt.refresh-expiration:604800000}")
+    @Value("${jwt.refresh-expiration}")
     private Long refreshExpiration;
 
     // 令牌前缀
@@ -39,9 +38,6 @@ public class JwtUtil {
     // 声明中的用户ID键
     private static final String CLAIM_KEY_USERID = "userId";
 
-    // 声明中的用户手机号键
-    private static final String CLAIM_KEY_PHONE = "sub";
-
     // 声明中的用户角色键
     private static final String CLAIM_KEY_ROLE = "role";
 
@@ -51,10 +47,9 @@ public class JwtUtil {
     /**
      * 生成访问令牌
      */
-    public String generateToken(Long userId, String phone, String role) {
+    public String generateToken(Long userId, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_KEY_USERID, userId);
-        claims.put(CLAIM_KEY_PHONE, phone);
         claims.put(CLAIM_KEY_ROLE, role);
         claims.put(CLAIM_KEY_CREATED, new Date());
 
@@ -64,10 +59,9 @@ public class JwtUtil {
     /**
      * 生成刷新令牌
      */
-    public String generateRefreshToken(Long userId, String phone, String role) {
+    public String generateRefreshToken(Long userId, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_KEY_USERID, userId);
-        claims.put(CLAIM_KEY_PHONE, phone);
         claims.put(CLAIM_KEY_ROLE, role);
         claims.put(CLAIM_KEY_CREATED, new Date());
         claims.put("type", "refresh");
@@ -76,27 +70,25 @@ public class JwtUtil {
     }
 
     /**
+     * 从请求头中提取令牌
+     */
+    public String extractToken(String originalToken) {
+        if (originalToken != null && originalToken.startsWith(TOKEN_PREFIX)) {
+            return originalToken.substring(TOKEN_PREFIX.length());
+        }
+        return null;
+    }
+
+    /**
      * 从令牌中获取用户ID
      */
-    public Long getUserIdFromToken(String token) {
+    public Long getUserIdFromToken(String originalToken) {
+        String token = extractToken(originalToken);
         try {
             Claims claims = getClaimsFromToken(token);
             return claims.get(CLAIM_KEY_USERID, Long.class);
         } catch (Exception e) {
-            logger.error("从令牌获取用户ID失败", e);
-            return null;
-        }
-    }
-
-    /**
-     * 从令牌中获取手机号
-     */
-    public String getPhoneFromToken(String token) {
-        try {
-            Claims claims = getClaimsFromToken(token);
-            return claims.getSubject();
-        } catch (Exception e) {
-            logger.error("从令牌获取手机号失败", e);
+            LOGGER.error("从令牌获取用户ID失败", e);
             return null;
         }
     }
@@ -104,12 +96,13 @@ public class JwtUtil {
     /**
      * 从令牌中获取用户角色
      */
-    public String getRoleFromToken(String token) {
+    public String getRoleFromToken(String originalToken) {
+        String token = extractToken(originalToken);
         try {
             Claims claims = getClaimsFromToken(token);
             return claims.get(CLAIM_KEY_ROLE, String.class);
         } catch (Exception e) {
-            logger.error("从令牌获取用户角色失败", e);
+            LOGGER.error("从令牌获取用户角色失败", e);
             return null;
         }
     }
@@ -117,12 +110,13 @@ public class JwtUtil {
     /**
      * 从令牌中获取创建时间
      */
-    public Date getCreatedDateFromToken(String token) {
+    public Date getCreatedDateFromToken(String originalToken) {
+        String token = extractToken(originalToken);
         try {
             Claims claims = getClaimsFromToken(token);
             return claims.get(CLAIM_KEY_CREATED, Date.class);
         } catch (Exception e) {
-            logger.error("从令牌获取创建时间失败", e);
+            LOGGER.error("从令牌获取创建时间失败", e);
             return null;
         }
     }
@@ -130,12 +124,13 @@ public class JwtUtil {
     /**
      * 从令牌中获取过期时间
      */
-    public Date getExpirationDateFromToken(String token) {
+    public Date getExpirationDateFromToken(String originalToken) {
+        String token = extractToken(originalToken);
         try {
             Claims claims = getClaimsFromToken(token);
             return claims.getExpiration();
         } catch (Exception e) {
-            logger.error("从令牌获取过期时间失败", e);
+            LOGGER.error("从令牌获取过期时间失败", e);
             return null;
         }
     }
@@ -143,7 +138,8 @@ public class JwtUtil {
     /**
      * 验证令牌是否有效
      */
-    public boolean validateToken(String token) {
+    public boolean validateToken(String originalToken) {
+        String token = extractToken(originalToken);
         try {
             Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
@@ -151,17 +147,17 @@ public class JwtUtil {
                     .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            logger.error("令牌已过期: {}", e.getMessage());
+            LOGGER.error("令牌已过期: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("不支持的令牌: {}", e.getMessage());
+            LOGGER.error("不支持的令牌: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            logger.error("令牌格式错误: {}", e.getMessage());
+            LOGGER.error("令牌格式错误: {}", e.getMessage());
         } catch (SignatureException e) {
-            logger.error("令牌签名验证失败: {}", e.getMessage());
+            LOGGER.error("令牌签名验证失败: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("令牌参数错误: {}", e.getMessage());
+            LOGGER.error("令牌参数错误: {}", e.getMessage());
         } catch (Exception e) {
-            logger.error("令牌验证失败: {}", e.getMessage());
+            LOGGER.error("令牌验证失败: {}", e.getMessage());
         }
         return false;
     }
@@ -169,7 +165,8 @@ public class JwtUtil {
     /**
      * 检查令牌是否即将过期（在指定时间内过期）
      */
-    public boolean isTokenExpiringSoon(String token, long millis) {
+    public boolean isTokenExpiringSoon(String originalToken, long millis) {
+        String token = extractToken(originalToken);
         try {
             Date expiration = getExpirationDateFromToken(token);
             if (expiration == null) {
@@ -177,7 +174,7 @@ public class JwtUtil {
             }
             return expiration.getTime() - System.currentTimeMillis() <= millis;
         } catch (Exception e) {
-            logger.error("检查令牌过期状态失败", e);
+            LOGGER.error("检查令牌过期状态失败", e);
             return false;
         }
     }
@@ -185,16 +182,16 @@ public class JwtUtil {
     /**
      * 刷新令牌
      */
-    public String refreshToken(String token) {
+    public String refreshToken(String originalToken) {
+        String token = extractToken(originalToken);
         try {
             Claims claims = getClaimsFromToken(token);
             Long userId = claims.get(CLAIM_KEY_USERID, Long.class);
-            String phone = claims.getSubject();
             String role = claims.get(CLAIM_KEY_ROLE, String.class);
 
-            return generateToken(userId, phone, role);
+            return generateToken(userId, role);
         } catch (Exception e) {
-            logger.error("刷新令牌失败", e);
+            LOGGER.error("刷新令牌失败", e);
             return null;
         }
     }
@@ -208,7 +205,6 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject((String) claims.get(CLAIM_KEY_PHONE))
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

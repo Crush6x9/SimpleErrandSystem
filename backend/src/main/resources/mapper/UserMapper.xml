@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.delivery.mapper.UserMapper">
 
     <resultMap id="UserResultMap" type="com.errand.entity.User">
-        <id     property="id"           column="id" />
-        <result property="phone"        column="phone" />
-        <result property="password"     column="password" />
-        <result property="role"         column="role" />
+        <id     property="userId"       column="user_id"    />
+        <result property="phone"        column="phone"      />
+        <result property="password"     column="password"   />
+        <result property="username"     column="username"   />
+        <result property="avatar"       column="avatar"     />
         <result property="studentId"    column="student_id" />
-        <result property="idCardImage"  column="id_card_image" />
-        <result property="verified"     column="verified" />
-        <result property="createdTime"  column="created_time" />
-        <result property="updatedTime"  column="updated_time" />
+        <result property="certificate"  column="certificate"/>
+        <result property="role"         column="role"       />
+        <result property="createTime"   column="create_time"/>
+        <result property="updateTime"   column="update_time"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.errand.entity.User" useGeneratedKeys="true" keyProperty="userId">
@@ -35,6 +36,15 @@
             create_time, update_time
         FROM `user`
         WHERE phone = #{phone}
+    </select>
+
+    <select id="findByPhoneAndNotUserId" resultMap="UserResultMap">
+        SELECT
+            user_id, phone, password, username, avatar,
+            student_id, certificate, role,
+            create_time, update_time
+        FROM `user`
+        WHERE phone = #{phone} AND user_id != #{excludeUserId}
     </select>
 
     <update id="update" parameterType="com.errand.entity.User">
@@ -73,6 +83,23 @@
             password = #{password},
             update_time = #{updatedTime}
         WHERE user_id = #{id}
+    </update>
+
+    <select id="findById" parameterType="long" resultMap="UserResultMap">
+        SELECT
+            user_id, phone, password, username, avatar,
+            student_id, certificate, role,
+            create_time, update_time
+        FROM `user`
+        WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUsername">
+        UPDATE `user`
+        SET
+            username = #{username},
+            update_time = #{updateTime}
+        WHERE user_id = #{userId}
     </update>
 
 </mapper>

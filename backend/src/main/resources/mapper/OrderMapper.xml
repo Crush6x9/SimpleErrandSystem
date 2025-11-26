@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.errand.mapper.OrderMapper">
+
+    <resultMap id="OrderResultMap" type="com.errand.entity.Order">
+        <id     property="orderId"          column="order_id"       />
+        <result property="clientId"         column="client_id"      />
+        <result property="helperId"         column="helper_id"      />
+        <result property="content"          column="content"        />
+        <result property="helpTime"         column="help_time"      />
+        <result property="phone"            column="phone"          />
+        <result property="reward"           column="reward"         />
+        <result property="status"           column="status"         />
+        <result property="publishTime"      column="publish_time"   />
+        <result property="acceptTime"       column="accept_time"    />
+        <result property="completeTime"     column="complete_time"  />
+        <result property="clientUsername"   column="client_username"/>
+        <result property="helperUsername"   column="helper_username"/>
+        <result property="clientAvatar"     column="client_avatar"  />
+        <result property="helperAvatar"     column="helper_avatar"  />
+    </resultMap>
+
+    <insert id="insertOrder" parameterType="com.errand.entity.Order" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO `order` (client_id, helper_id, content, help_time, phone, reward, status, publish_time, accept_time, complete_time)
+        VALUES (#{clientId}, #{helperId}, #{content}, #{helpTime}, #{phone}, #{reward}, #{status}, #{publishTime}, #{acceptTime}, #{completeTime})
+    </insert>
+
+    <select id="selectOrderById" parameterType="Long" resultMap="OrderResultMap">
+        SELECT o.*,
+               u1.username as client_username,
+               u1.avatar as client_avatar,
+               u2.username as helper_username,
+               u2.avatar as helper_avatar
+        FROM `order` o
+                 LEFT JOIN user u1 ON o.client_id = u1.user_id
+                 LEFT JOIN user u2 ON o.helper_id = u2.user_id
+        WHERE o.order_id = #{orderId}
+    </select>
+
+    <update id="updateOrder" parameterType="com.errand.entity.Order">
+        UPDATE `order`
+        <set>
+            <if test="helperId != null">helper_id = #{helperId},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="helpTime != null">help_time = #{helpTime},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="reward != null">reward = #{reward},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="acceptTime != null">accept_time = #{acceptTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+        </set>
+        WHERE order_id = #{orderId}
+    </update>
+
+    <select id="selectOrdersByCondition" resultMap="OrderResultMap">
+        SELECT o.*,
+        u1.username as client_username,
+        u1.avatar as client_avatar,
+        u2.username as helper_username,
+        u2.avatar as helper_avatar
+        FROM `order` o
+        LEFT JOIN user u1 ON o.client_id = u1.user_id
+        LEFT JOIN user u2 ON o.helper_id = u2.user_id
+        <where>
+            <if test="query.type == 'published'">
+                o.client_id = #{userId}
+            </if>
+            <if test="query.type == 'accepted'">
+                o.helper_id = #{userId}
+            </if>
+            <if test="query.type == 'available'">
+                o.status = '0'
+            </if>
+            <if test="query.type == 'all'">
+                (o.client_id = #{userId} OR o.helper_id = #{userId})
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND o.status = #{query.status}
+            </if>
+        </where>
+        ORDER BY o.publish_time DESC
+        LIMIT #{query.size} OFFSET #{query.size} * (#{query.page} - 1)
+    </select>
+
+    <select id="countOrdersByCondition" resultType="int">
+        SELECT COUNT(*)
+        FROM `order` o
+        <where>
+            <if test="query.type == 'published'">
+                o.client_id = #{userId}
+            </if>
+            <if test="query.type == 'accepted'">
+                o.helper_id = #{userId}
+            </if>
+            <if test="query.type == 'available'">
+                o.status = '0'
+            </if>
+            <if test="query.type == 'all'">
+                (o.client_id = #{userId} OR o.helper_id = #{userId})
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND o.status = #{query.status}
+            </if>
+        </where>
+    </select>
+
+    <select id="countAllOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order`
+    </select>
+
+    <select id="countAvailableOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order` WHERE status = '0'
+    </select>
+
+    <select id="countUserPublishedOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order` WHERE client_id = #{userId}
+    </select>
+
+    <select id="countUserAcceptedOrders" resultType="Long">
+        SELECT COUNT(*) FROM `order` WHERE helper_id = #{userId}
+    </select>
+
+    <select id="selectAvailableOrders" resultMap="OrderResultMap">
+        SELECT o.*,
+               u1.username as client_username,
+               u1.avatar as client_avatar
+        FROM `order` o
+                 LEFT JOIN user u1 ON o.client_id = u1.user_id
+        WHERE o.status = '0'
+        ORDER BY o.publish_time DESC
+    </select>
+
+    <select id="countPublishedOrders" parameterType="Long" resultType="int">
+        SELECT COUNT(*) FROM `order` WHERE client_id = #{userId}
+    </select>
+
+    <select id="countAcceptedOrders" parameterType="Long" resultType="int">
+        SELECT COUNT(*) FROM `order` WHERE helper_id = #{userId}
+    </select>
+
+    <select id="countCompletedOrders" parameterType="Long" resultType="int">
+        SELECT COUNT(*) FROM `order` WHERE helper_id = #{userId} AND status = '2'
+    </select>
+
+    <select id="selectTodayIncome" parameterType="Long" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(reward), 0)
+        FROM `order`
+        WHERE helper_id = #{userId}
+          AND status = '2'
+          AND DATE(complete_time) = CURDATE()
+    </select>
+
+    <select id="selectBillListByUserId" resultType="com.errand.dto.BillInfo">
+        SELECT
+            order_id as orderId,
+            reward as income,
+            complete_time as completeTime,
+            content
+        FROM `order`
+        WHERE helper_id = #{userId}
+          AND status = '2'
+        ORDER BY complete_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countBillListByUserId" parameterType="Long" resultType="Long">
+        SELECT COUNT(*)
+        FROM `order`
+        WHERE helper_id = #{userId}
+          AND status = '2'
+    </select>
+
+</mapper>

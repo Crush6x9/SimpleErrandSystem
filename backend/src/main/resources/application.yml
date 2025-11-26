@@ -1,8 +1,8 @@
-#下面这些内容是为了让MyBatis映射
-#指定Mybatis的Mapper文件
+# 下面这些内容是为了让 MyBatis 映射
+# 指定 Mybatis 的 Mapper 文件
 mybatis:
   mapper-locations: classpath*:mapper/*Mapper.xml
-  #指定Mybatis的实体目录
+  #指定 Mybatis 的实体目录
   type-aliases-package: com.errand.entity
 
 # 应用服务 WEB 访问端口
@@ -14,17 +14,26 @@ spring:
   # 系统应用命名
   application:
     name: errandSystem
+  # 定时任务
+  task:
+    scheduling:
+      pool:
+        size: 10  # 同时容纳10条线程
   # MySQL数据源、账户、密码
   datasource:
     url: jdbc:mysql://localhost:3306/errand
-    username: root
-    password: 123456
+    username: root  # 根据本地账户更改
+    password: 123456  # 根据本地账户更改
   # 文件上传限制
   servlet:
     multipart:
       enabled: true
-      max-file-size: 10MB
+      max-file-size: 5MB
       max-request-size: 20MB
+
+# 文件上传路径
+file:
+  upload-dir: ./uploads/
 
 # 日志信息配置
 logging:
@@ -38,6 +47,7 @@ logging:
     com.errand.mapper: DEBUG
     org.springframework.web: WARN
     org.springframework.security: WARN
+    org.springframework.scheduling: INFO
     org.mybatis: DEBUG
     org.apache: WARN
   # 日志记录格式
@@ -50,6 +60,6 @@ logging:
 
 # JWT令牌配置
 jwt:
-  secret: errandSystemSecretKey2025ForSimpleErrandApplication
-  expiration: 86400000    # 24小时
+  secret: ${JWT_SECRET:errandSystemSecretKey2025ForSimpleErrandApplication}
+  expiration: 1800000  # 30分钟
   refresh-expiration: 604800000  # 7天
