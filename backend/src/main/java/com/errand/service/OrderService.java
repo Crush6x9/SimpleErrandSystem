@@ -19,6 +19,4 @@ public interface OrderService {
     Result getOrderList(OrderQueryRequest request, Long userId);
 
     Result getOrderDetail(Long orderId, Long userId);
-
-    Result getAvailableOrders();
 }

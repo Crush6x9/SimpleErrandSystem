@@ -11,9 +11,17 @@ import java.time.LocalDateTime;
 @Data
 @ApiModel(description = "订单请求")
 public class OrderRequest {
-    @NotBlank(message = "订单内容不能为空")
-    @ApiModelProperty(value = "订单需求内容", required = true)
-    private String content;
+    @NotBlank(message = "订单主题不能为空")
+    @ApiModelProperty(value = "订单主题", required = true)
+    private String title;
+
+    @NotBlank(message = "订单指定地点不能为空")
+    @ApiModelProperty(value = "订单指定地点", required = true)
+    private String address;
+
+    @NotBlank(message = "订单描述不能为空")
+    @ApiModelProperty(value = "订单描述", required = true)
+    private String description;
 
     @NotNull(message = "帮助时间不能为空")
     @ApiModelProperty(value = "订单指定时间", required = true)

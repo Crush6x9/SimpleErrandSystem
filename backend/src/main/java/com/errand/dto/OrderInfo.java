@@ -12,14 +12,14 @@ public class OrderInfo {
     @ApiModelProperty(value = "订单ID")
     private Long orderId;
 
-    @ApiModelProperty(value = "委托人ID")
-    private Long clientId;
+    @ApiModelProperty(value = "订单主题")
+    private String title;
 
-    @ApiModelProperty(value = "跑腿员ID")
-    private Long helperId;
+    @ApiModelProperty(value = "订单指定地点")
+    private String address;
 
-    @ApiModelProperty(value = "订单需求内容")
-    private String content;
+    @ApiModelProperty(value = "订单描述")
+    private String description;
 
     @ApiModelProperty(value = "订单指定时间")
     private LocalDateTime helpTime;
@@ -56,4 +56,7 @@ public class OrderInfo {
 
     @ApiModelProperty(value = "是否已评价")
     private Boolean evaluated;
+
+    @ApiModelProperty(value = "评价（0 差评，1 好评）")
+    private String review;
 }

@@ -1,6 +1,7 @@
 package com.errand.service.impl;
 
 import com.errand.dto.*;
+import com.errand.entity.Evaluation;
 import com.errand.entity.Order;
 import com.errand.mapper.EvaluationMapper;
 import com.errand.mapper.OrderMapper;
@@ -35,7 +36,9 @@ public class OrderServiceImpl implements OrderService {
         try {
             Order order = new Order();
             order.setClientId(clientId);
-            order.setContent(request.getContent());
+            order.setTitle(request.getTitle());
+            order.setAddress(request.getAddress());
+            order.setDescription(request.getDescription());
             order.setHelpTime(request.getHelpTime());
             order.setPhone(request.getPhone());
             order.setReward(request.getReward());
@@ -240,23 +243,12 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    @Override
-    public Result getAvailableOrders() {
-        try {
-            List<Order> orders = orderMapper.selectAvailableOrders();
-            List<OrderInfo> orderInfos = orders.stream().map(this::convertToOrderInfo).collect(Collectors.toList());
-            return Result.success("获取可接订单成功", orderInfos);
-        } catch (Exception e) {
-            return Result.error("获取可接订单失败");
-        }
-    }
-
     private OrderInfo convertToOrderInfo(Order order) {
         OrderInfo info = new OrderInfo();
         info.setOrderId(order.getOrderId());
-        info.setClientId(order.getClientId());
-        info.setHelperId(order.getHelperId());
-        info.setContent(order.getContent());
+        info.setTitle(order.getTitle());
+        info.setAddress(order.getAddress());
+        info.setDescription(order.getDescription());
         info.setHelpTime(order.getHelpTime());
         info.setPhone(order.getPhone());
         info.setReward(order.getReward());
@@ -269,6 +261,12 @@ public class OrderServiceImpl implements OrderService {
         info.setClientAvatar(order.getClientAvatar());
         info.setHelperAvatar(order.getHelperAvatar());
         info.setEvaluated(evaluationMapper.existsEvaluationByOrderId(order.getOrderId()));
+        if ("2".equals(order.getStatus()) && info.getEvaluated()) {
+            Evaluation evaluation = evaluationMapper.selectEvaluationByOrderId(order.getOrderId());
+            if (evaluation != null) {
+                info.setReview(evaluation.getReview());
+            }
+        }
         return info;
     }
 }

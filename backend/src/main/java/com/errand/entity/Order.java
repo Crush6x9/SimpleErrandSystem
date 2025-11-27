@@ -15,11 +15,17 @@ public class Order {
     @ApiModelProperty(value = "委托人ID", example = "101")
     private Long clientId;
 
-    @ApiModelProperty(value = "跑腿员ID", example = "101")
+    @ApiModelProperty(value = "跑腿员ID", example = "102")
     private Long helperId;
 
-    @ApiModelProperty(value = "订单需求内容")
-    private String content;
+    @ApiModelProperty(value = "订单主题")
+    private String title;
+
+    @ApiModelProperty(value = "订单指定地点")
+    private String address;
+
+    @ApiModelProperty(value = "订单描述")
+    private String description;
 
     @ApiModelProperty(value = "订单指定时间")
     private LocalDateTime helpTime;

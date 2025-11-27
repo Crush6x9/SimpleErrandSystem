@@ -90,13 +90,6 @@ public interface OrderMapper {
     );
 
     /**
-     * 查询可接取的订单
-     *
-     * @return 订单列表
-     */
-    List<Order> selectAvailableOrders();
-
-    /**
      * 查询用户今日收益
      *
      * @param userId 用户ID
