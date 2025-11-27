@@ -17,6 +17,6 @@ public class BillInfo {
     @ApiModelProperty(value = "完成时间")
     private String completeTime;
 
-    @ApiModelProperty(value = "订单内容")
-    private String content;
+    @ApiModelProperty(value = "订单主题")
+    private String title;
 }
