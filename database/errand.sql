@@ -11,7 +11,7 @@
  Target Server Version : 80036 (8.0.36)
  File Encoding         : 65001
 
- Date: 25/11/2025 12:25:02
+ Date: 27/11/2025 13:08:24
 */
 
 SET NAMES utf8mb4;
@@ -37,9 +37,11 @@ CREATE TABLE `order`  (
   `order_id` int NOT NULL AUTO_INCREMENT COMMENT '订单编号',
   `client_id` int NOT NULL COMMENT '委托人编号',
   `helper_id` int NULL DEFAULT NULL COMMENT '跑腿员编号',
-  `content` varchar(75) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单需求内容',
-  `help_time` datetime NULL DEFAULT NULL COMMENT '订单指定时间',
+  `title` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单主题',
+  `address` varchar(75) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单指定地点',
+  `description` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单描述',
   `phone` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '联系电话',
+  `help_time` datetime NULL DEFAULT NULL COMMENT '订单指定时间',
   `reward` decimal(4, 2) NULL DEFAULT 0.00 COMMENT '悬赏金额',
   `status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单状态（0 待帮助，1 已接单，2 已完成，3 已取消）',
   `publish_time` datetime NULL DEFAULT NULL COMMENT '发布时间',
