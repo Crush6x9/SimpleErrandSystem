@@ -69,7 +69,7 @@ public class UserController {
         }
     }
 
-    @PutMapping(value = "/info", consumes = "multipart/form-data")
+    @PutMapping(value = "/profile", consumes = "multipart/form-data")
     @ApiOperation("更新用户信息")
     public Result updateUserInfo(
             @RequestHeader("Authorization") String token,

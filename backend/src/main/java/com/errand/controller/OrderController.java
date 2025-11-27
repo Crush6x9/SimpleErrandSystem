@@ -49,7 +49,7 @@ public class OrderController {
         return orderService.completeOrder(userId, orderId);
     }
 
-    @PutMapping("/{orderId}/cancel")
+    @DeleteMapping("/{orderId}/cancel")
     @ApiOperation("取消订单")
     public Result cancelOrder(
             @RequestHeader("Authorization") String token,
@@ -90,11 +90,5 @@ public class OrderController {
             @PathVariable Long orderId) {
         Long userId = jwtUtil.getUserIdFromToken(token);
         return orderService.getOrderDetail(orderId, userId);
-    }
-
-    @GetMapping("/available")
-    @ApiOperation("获取可接取的订单列表")
-    public Result getAvailableOrders() {
-        return orderService.getAvailableOrders();
     }
 }

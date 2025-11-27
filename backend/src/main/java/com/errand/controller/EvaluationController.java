@@ -37,9 +37,10 @@ public class EvaluationController {
         return evaluationService.getEvaluationByOrderId(orderId);
     }
 
-    @GetMapping("/{userId}/stats")
+    @GetMapping("/stats")
     @ApiOperation("获取跑腿员的评价统计")
-    public Result getHelperEvaluationStats(@PathVariable Long userId) {
+    public Result getHelperEvaluationStats(@RequestHeader("Authorization") String token) {
+        Long userId = jwtUtil.getUserIdFromToken(token);
         return evaluationService.getHelperEvaluationStats(userId);
     }
 }

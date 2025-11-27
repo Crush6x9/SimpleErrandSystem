@@ -21,7 +21,7 @@ public class WalletController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GetMapping
+    @GetMapping("/list")
     @ApiOperation("获取钱包信息")
     public Result getWalletInfo(@RequestHeader("Authorization") String token) {
         Long userId = jwtUtil.getUserIdFromToken(token);
