@@ -22,17 +22,11 @@
         SELECT * FROM withdrawal WHERE user_id = #{userId} ORDER BY create_time DESC
     </select>
 
-    <select id="selectWithdrawalById" parameterType="Long" resultMap="WithdrawalResultMap">
-        SELECT * FROM withdrawal WHERE withdrawal_id = #{withdrawalId}
-    </select>
-
-    <update id="updateWithdrawal" parameterType="com.errand.entity.Withdrawal">
+    <update id="updateExpiredWithdrawals" parameterType="java.time.LocalDateTime">
         UPDATE withdrawal
-        <set>
-            <if test="status != null">status = #{status},</if>
-            <if test="updateTime != null">update_time = #{updateTime},</if>
-        </set>
-        WHERE withdrawal_id = #{withdrawalId}
+        SET status = '1', update_time = NOW()
+        WHERE status = '0'
+          AND create_time &lt;= #{expiredTime}
     </update>
 
 </mapper>

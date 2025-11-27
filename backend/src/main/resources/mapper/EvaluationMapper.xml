@@ -23,7 +23,9 @@
         SELECT e.*,
                u1.username as client_username,
                u2.username as helper_username,
-               o.content
+               o.title,
+               o.address,
+               o.description
         FROM evaluation e
                  INNER JOIN `order` o ON e.order_id = o.order_id
                  INNER JOIN user u1 ON o.client_id = u1.user_id
