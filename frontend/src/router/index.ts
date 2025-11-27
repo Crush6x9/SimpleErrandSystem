@@ -4,8 +4,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/help',
-    name: 'AllOrders',
-    component: () => import('@/views/AllOrders.vue')
+    name: 'Help',
+    component: () => import('@/views/HelpView.vue')
   },
   {
     path: '/',
@@ -16,11 +16,7 @@ const routes = [
     name: 'Home',
     component: () => import('../views/HomeView.vue')
   },
-  {
-    path: '/about',
-    name: 'About',
-    component: () => import('../views/AboutView.vue')
-  },
+
   {
     path: '/my',
     name: 'my',
@@ -48,12 +44,7 @@ const routes = [
     name: 'Register',
     component: () => import('../views/RegisterView.vue')
   },
-  {
-    path: '/order',
-    name: 'OrderList',
-    component: () => import('@/views/OrderList.vue'),
-    meta: { requiresAuth: true }
-  },
+
   {
     path: '/order/create',
     name: 'OrderCreate',

@@ -39,10 +39,10 @@ const loadUserData = async () => {
   try {
     // 模拟API调用
     console.log('调用获取用户数据API')
-    
+
     // 模拟异步请求
     await new Promise((resolve) => setTimeout(resolve, 300))
-    
+
     // 检查是否已有用户数据，如果没有则创建模拟数据
     if (!user.value.studentId) {
       const mockUser = {
@@ -82,7 +82,7 @@ const saveNickname = () => {
     Toast('昵称不能为空')
     return
   }
-  
+
   const updatedUser = updateUser({ nickname: newNickname.value.trim() })
   user.value = updatedUser
   showNicknameEdit.value = false
@@ -109,15 +109,15 @@ const handleDataItemClick = (type: string) => {
     router.push({ name: 'Wallet' })
   } else if (type === 'receivedOrders') {
     // 跳转到全部订单页面，并指定显示"我帮助的"标签页
-    router.push({ 
+    router.push({
       path: '/help',  // 使用正确的路径
-      query: { tab: 'helping' } 
+      query: { tab: 'helping' }
     })
   } else if (type === 'postedOrders') {
     // 跳转到全部订单页面，并指定显示"我发布的"标签页
-    router.push({ 
+    router.push({
       path: '/help',  // 使用正确的路径
-      query: { tab: 'mine' } 
+      query: { tab: 'mine' }
     })
   } else {
     Toast(`查看${type}详情`)
@@ -132,19 +132,14 @@ const handleContactClick = () => {
 
 <template>
   <div class="my">
-        <van-nav-bar 
-      title="我的" 
-      left-text="返回" 
-      left-arrow 
-      @click-left="handleBack" 
-    />
+    <van-nav-bar title="我的" left-text="返回" left-arrow @click-left="handleBack" />
     <!-- 联系客服按钮 -->
     <div class="contact-btn" @click="handleContactClick">
       <van-icon name="service-o" size="24" />
     </div>
-    
+
     <!-- 用户信息区域 -->
-    <div class="user-section" >
+    <div class="user-section">
       <div class="avatar">
         <img :src="user.avatar" @click="handleAvatarClick" alt="头像" />
       </div>
@@ -155,7 +150,7 @@ const handleContactClick = () => {
         </div>
       </div>
     </div>
-    
+
     <!-- 数据统计 -->
     <div class="data-stats">
       <div class="stat-item" @click="handleDataItemClick('receivedOrders')">
@@ -171,63 +166,36 @@ const handleContactClick = () => {
         <div class="stat-label">收益 ></div>
       </div>
     </div>
-    
+
     <!-- 评价区域 -->
     <div class="rating-section">
-      <!-- <h2 class="section-title">我的评价</h2> -->
       <div class="rating-item--good">
-        <!-- <van-icon name="like-o" color="#1989fa" size="20" /> -->
-         <van-image
-  width="150px"
-  height="150px"
-  src="/my-good.png"
-  class="rating-img"
-/>
-<i class="rating-value">{{ user.好评 }}</i>
+        <van-image width="150px" height="150px" src="/my-good.png" class="rating-img" />
+        <i class="rating-value">{{ user.好评 }}</i>
         <i class="rating-label">好评</i>
-        </div>
+      </div>
       <div class="rating-item--bad">
-        <!-- <van-icon name="dislike-o" color="#ee0a24" size="20" /> -->
-                  <van-image
-  width="150px"
-  src="/my-bad.png"
-  class="rating-img"
-/>
-<i class="rating-value">{{ user.差评 }}</i>
+        <van-image width="150px" src="/my-bad.png" class="rating-img" />
+        <i class="rating-value">{{ user.差评 }}</i>
         <i class="rating-label">差评</i>
       </div>
     </div>
-    
+
     <!-- 昵称编辑浮窗 -->
-    <van-popup 
-      v-model:show="showNicknameEdit" 
-      position="bottom" 
-      :style="{ height: '30%' }"
-      round
-      class="popup"
-      >
+    <van-popup v-model:show="showNicknameEdit" position="bottom" :style="{ height: '30%' }" round class="popup">
       <div class="nickname-edit">
         <h3>修改昵称</h3>
-        <van-field 
-          v-model="newNickname" 
-          placeholder="请输入新昵称" 
-          maxlength="10"
-          clearable
-        />
+        <van-field v-model="newNickname" placeholder="请输入新昵称" maxlength="10" clearable />
         <div class="edit-actions">
           <van-button type="default" @click="showNicknameEdit = false">取消</van-button>
           <van-button type="primary" @click="saveNickname">确定</van-button>
         </div>
       </div>
     </van-popup>
-    
+
     <!-- 客服联系浮窗 -->
-    <van-dialog
-      v-model:show="showContactDialog"
-      title="联系客服"
-      :show-confirm-button="false"
-      :close-on-click-overlay="true"
-    >
+    <van-dialog v-model:show="showContactDialog" title="联系客服" :show-confirm-button="false"
+      :close-on-click-overlay="true">
       <div class="contact-dialog">
         <p>请扫描下方二维码添加客服微信：</p>
         <img src="/wechat-qr.png" class="qr-code" alt="客服微信二维码" />
@@ -313,17 +281,19 @@ const handleContactClick = () => {
   background-color: #9ae9ff;
   color: #666;
 }
-.stat-item--earning{
+
+.stat-item--earning {
   flex: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-margin: 1px;
+  margin: 1px;
   height: 120px;
   background-color: #666;
   color: #9ae9ff;
 }
+
 .stat-value {
   font-size: 24px;
   font-weight: bold;
@@ -351,7 +321,8 @@ margin: 1px;
   font-weight: bold;
 }
 
-.rating-item--good,.rating-item--bad {
+.rating-item--good,
+.rating-item--bad {
   height: 380px;
   flex: 1;
   display: flex;
@@ -363,16 +334,20 @@ margin: 1px;
   color: #fff;
   margin: 0 1px;
 }
-.rating-item--good{
+
+.rating-item--good {
   background-color: #9ae9ff;
 }
-.rating-item--bad{
+
+.rating-item--bad {
   background-color: #666;
 }
-.rating-img{
-  margin:20px 0 0 30px;
+
+.rating-img {
+  margin: 20px 0 0 30px;
   /* padding: 0 0 0 30px; */
 }
+
 .rating-label {
   font-size: 70px;
   margin: 10px 0;
@@ -421,5 +396,4 @@ margin: 1px;
   font-weight: bold;
   margin-top: 10px;
 }
-
 </style>
