@@ -14,8 +14,8 @@
     </resultMap>
 
     <insert id="insertWithdrawal" parameterType="com.errand.entity.Withdrawal" useGeneratedKeys="true" keyProperty="withdrawalId">
-        INSERT INTO withdrawal (user_id, amount, status, create_time, update_time)
-        VALUES (#{userId}, #{amount}, #{status}, #{createTime}, #{updateTime})
+        INSERT INTO withdrawal (user_id, amount, status, create_time)
+        VALUES (#{userId}, #{amount}, #{status}, #{createTime})
     </insert>
 
     <select id="selectWithdrawalsByUserId" parameterType="Long" resultMap="WithdrawalResultMap">
