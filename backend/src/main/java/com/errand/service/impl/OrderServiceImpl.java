@@ -11,7 +11,6 @@ import com.errand.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -115,6 +114,7 @@ public class OrderServiceImpl implements OrderService {
 
             int result = orderMapper.updateOrder(order);
             if (result > 0) {
+                walletService.getWalletInfo(userId);
                 // 完成订单后，将悬赏金额转入跑腿员钱包
                 walletService.addIncome(order.getHelperId(), order.getReward());
                 return Result.success("订单完成成功");
