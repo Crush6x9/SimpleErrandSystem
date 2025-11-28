@@ -54,20 +54,21 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter,useRoute } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Toast } from 'vant'
 import { login } from '@/utils/auth'
-
-// 处理返回
-const handleBack = () => {
-  router.back()
-}
+import { authAPI } from '@/api'
 
 const router = useRouter()
 const route = useRoute()
 const phone = ref('')
 const password = ref('')
 const isPasswordVisible = ref(false)
+
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
 
 // 切换密码可见性
 const togglePasswordVisibility = () => {
@@ -76,7 +77,6 @@ const togglePasswordVisibility = () => {
 
 // 登录处理
 const handleLogin = async () => {
-  // 前端基础验证
   if (!/^1[3-9]\d{9}$/.test(phone.value)) {
     Toast('请输入有效的手机号')
     return
@@ -87,7 +87,6 @@ const handleLogin = async () => {
     return
   }
 
-  // 显示加载状态
   const toast = Toast.loading({
     message: '登录中...',
     forbidClick: true,
@@ -95,32 +94,48 @@ const handleLogin = async () => {
   })
 
   try {
-    // 模拟API调用 - 实际使用时替换为axios请求
-    // POST /api/login { phone, password }
-    console.log('调用登录API:', { phone: phone.value, password: password.value })
-    
-    // 模拟异步请求（实际项目替换为真实API）
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    
-    // 模拟成功响应
-    const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-    
-    // 保存登录状态（实际项目应存储后端返回的token）
-    // localStorage.setItem('authToken', mockToken)
-    // localStorage.setItem('userPhone', phone.value)
-    login(mockToken,phone.value)
+    // 调用登录API
+    const response = await authAPI.login({
+      phone: phone.value,
+      password: password.value
+    })
     
     Toast.clear()
+    
+    // 检查响应状态
+    if (response.code !== 200) {
+      Toast(response.message || '登录失败')
+      return
+    }
+    
     Toast('登录成功')
     
-    //重定向
+    // 保存登录状态
+    const loginData = response.data
+    if (loginData && loginData.accessToken) {
+      // 如果有用户信息，保存用户ID
+      const userId = loginData.userInfo?.id
+      login(loginData.accessToken, phone.value, userId?.toString())
+      
+      // 保存完整的用户信息到本地存储
+      if (loginData.userInfo) {
+        localStorage.setItem('userInfo', JSON.stringify(loginData.userInfo))
+      }
+    }
+    
+    // 重定向到首页或之前要访问的页面
     const redirectPath = (route.query.redirect as string) || '/home'
-    // 跳转到首页
-    router.push({ name: 'Home' })
-  } catch (error) {
+    router.push(redirectPath)
+  } catch (error: any) {
     Toast.clear()
-    Toast('手机号或密码错误')
-    // 实际项目中这里应该处理错误
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '登录失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 </script>

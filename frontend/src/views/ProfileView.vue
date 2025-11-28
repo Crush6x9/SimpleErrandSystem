@@ -1,11 +1,103 @@
 <!-- 个人信息页面  -->
-<!-- src/views/ProfileView.vue -->
+<template>
+  <div class="profile">
+    <van-nav-bar title="我的信息" left-text="返回" left-arrow @click-left="handleBack" />
+
+    <div class="profile-content">
+      <!-- 头像区域 -->
+      <van-cell-group inset>
+        <van-cell title="头像" :border="false">
+          <template #right-icon>
+            <van-uploader :after-read="handleAvatarUpload" :max-count="1" :max-size="2 * 1024 * 1024"
+              @oversize="() => Toast('头像大小不能超过2MB')">
+              <div class="avatar-upload">
+                <img :src="user.avatar || user.avatarUrl || '/default-profile-photo.png'" alt="头像" />
+                <div v-if="isUploading" class="uploading-mask">
+                  <van-loading size="20" />
+                </div>
+              </div>
+            </van-uploader>
+          </template>
+        </van-cell>
+      </van-cell-group>
+
+      <!-- 个人信息 -->
+      <van-cell-group inset>
+        <van-cell title="昵称" :value="user.nickname || user.username || '未设置'" is-link @click="handleNicknameClick" />
+        <van-cell title="学号" :value="user.studentId || '未设置'" is-link @click="handleStudentIdClick" />
+        <van-cell title="手机号" :value="user.phone || '未绑定'" is-link :border="false" @click="handlePhoneClick" />
+      </van-cell-group>
+
+      <!-- 上传证明 -->
+      <van-cell-group inset>
+        <van-cell title="上传学生证明" :border="false">
+          <template #right-icon>
+            <van-uploader :after-read="handleProofUpload" :max-count="1" :max-size="5 * 1024 * 1024"
+              @oversize="() => Toast('证明文件大小不能超过5MB')">
+              <van-button type="primary" size="small">选择文件</van-button>
+            </van-uploader>
+          </template>
+        </van-cell>
+        <div v-if="newProof" class="proof-preview">
+          <img :src="newProof" alt="学生证明" />
+        </div>
+      </van-cell-group>
+
+      <!-- 操作按钮 -->
+      <div class="action-buttons">
+        <van-button type="primary" size="large" @click="handleSubmit">提交</van-button>
+        <van-button type="default" size="large" @click="handleCancel">取消</van-button>
+      </div>
+    </div>
+
+    <!-- 学号编辑浮窗 -->
+    <van-popup v-model:show="showStudentIdEdit" position="bottom" :style="{ height: '30%' }" round class="popup">
+      <div class="student-id-edit">
+        <h3>修改学号</h3>
+        <van-field v-model="newStudentId" placeholder="请输入学号" maxlength="12" clearable />
+        <p class="hint">请输入8-12位数字的学号</p>
+        <div class="edit-actions">
+          <van-button type="default" @click="showStudentIdEdit = false">取消</van-button>
+          <van-button type="primary" @click="saveStudentId">确定</van-button>
+        </div>
+      </div>
+    </van-popup>
+
+    <!-- 昵称编辑浮窗 -->
+    <van-popup v-model:show="showNicknameEdit" position="bottom" :style="{ height: '30%' }" round class="popup">
+      <div class="nickname-edit">
+        <h3>修改昵称</h3>
+        <van-field v-model="newNickname" placeholder="请输入新昵称" maxlength="10" clearable />
+        <p class="hint">昵称最多10个字符</p>
+        <div class="edit-actions">
+          <van-button type="default" @click="showNicknameEdit = false">取消</van-button>
+          <van-button type="primary" @click="saveNickname">确定</van-button>
+        </div>
+      </div>
+    </van-popup>
+
+    <!-- 手机号编辑浮窗 -->
+    <van-popup v-model:show="showPhoneEdit" position="bottom" :style="{ height: '30%' }" round class="popup">
+      <div class="phone-edit">
+        <h3>绑定手机号</h3>
+        <van-field v-model="newPhone" type="tel" placeholder="请输入手机号" maxlength="11" clearable />
+        <p class="hint">请输入11位手机号码</p>
+        <div class="edit-actions">
+          <van-button type="default" @click="showPhoneEdit = false">取消</van-button>
+          <van-button type="primary" @click="savePhone">确定</van-button>
+        </div>
+      </div>
+    </van-popup>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast, Uploader, Dialog } from 'vant'
-import { isAuthenticated, getUserPhone } from '@/utils/auth'
-import { getUser, updateUser } from '@/utils/user'
+import { isAuthenticated, getUserPhone, getUserId } from '@/utils/auth'
+import { getUser, updateUser, loadUserFromServer } from '@/utils/user'
+import { userAPI } from '@/api'
 
 const router = useRouter()
 const isAuth = ref(false)
@@ -22,7 +114,6 @@ const avatarFile = ref<File | null>(null)
 
 onMounted(() => {
   checkAuthStatus()
-  // 模拟加载用户数据
   loadUserData()
 })
 
@@ -37,13 +128,14 @@ const checkAuthStatus = () => {
 // 加载用户数据
 const loadUserData = async () => {
   try {
-    // 模拟API调用
-    console.log('调用获取用户数据API')
-    
-    // 模拟异步请求
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    
-    user.value = getUser()
+    const userId = getUserId()
+    if (userId) {
+      const userData = await loadUserFromServer(userId)
+      user.value = userData
+    } else {
+      user.value = getUser()
+    }
+
     // 初始化表单数据
     newPhone.value = user.value.phone || getUserPhone() || ''
   } catch (error) {
@@ -56,78 +148,152 @@ const handleBack = () => {
   router.back()
 }
 
-
 // 处理头像上传
-const handleAvatarUpload = (file: any) => {
-  // Vant Uploader 的 after-read 返回的是包含 file 属性的对象
+const handleAvatarUpload = async (file: any) => {
   if (file && file.file) {
     avatarFile.value = file.file
     isUploading.value = true
-    
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const base64String = e.target?.result as string
-      
-      // 更新用户头像
-      const updatedUser = updateUser({ avatar: base64String })
-      user.value = updatedUser
-      
-      isUploading.value = false
-      Toast('头像上传成功')
+
+    const userId = getUserId()
+    if (userId) {
+      const formData = new FormData()
+      formData.append('avatar', file.file)
+
+      try {
+        const response = await userAPI.uploadAvatar(userId, formData)
+
+        if (response.code === 200 && response.data) {
+          // 更新用户头像
+          const updatedUser = updateUser({
+            avatar: response.data.avatarUrl,
+            avatarUrl: response.data.avatarUrl
+          })
+          user.value = updatedUser
+          Toast('头像上传成功')
+        } else {
+          Toast('头像上传失败')
+        }
+      } catch (error) {
+        Toast('头像上传失败，请重试')
+      } finally {
+        isUploading.value = false
+      }
+    } else {
+      // 本地处理
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string
+        const updatedUser = updateUser({ avatar: base64String })
+        user.value = updatedUser
+        isUploading.value = false
+        Toast('头像上传成功')
+      }
+      reader.onerror = () => {
+        isUploading.value = false
+        Toast('头像上传失败，请重试')
+      }
+      reader.readAsDataURL(file.file)
     }
-    reader.onerror = () => {
-      isUploading.value = false
-      Toast('头像上传失败，请重试')
-    }
-    reader.readAsDataURL(file.file)
   } else {
     Toast('文件上传失败，请重试')
   }
 }
 
+// 用户认证
+const handleCertification = async () => {
+  const userId = getUserId()
+  if (!userId) {
+    Toast('请先登录')
+    return
+  }
+
+  try {
+    const formData = new FormData()
+    formData.append('studentId', user.value.studentId)
+    if (avatarFile.value) {
+      formData.append('avatar', avatarFile.value)
+    }
+    // 这里需要添加证件图片上传逻辑
+
+    const response = await userAPI.certification(userId, formData)
+    if (response.code === 200) {
+      Toast('认证提交成功')
+    } else {
+      Toast('认证提交失败')
+    }
+  } catch (error) {
+    Toast('认证提交失败')
+  }
+}
 
 // 处理昵称点击
 const handleNicknameClick = () => {
-  newNickname.value = user.value.nickname
+  newNickname.value = user.value.nickname || user.value.username || ''
   showNicknameEdit.value = true
 }
 
 // 保存昵称
-const saveNickname = () => {
+const saveNickname = async () => {
   if (!newNickname.value.trim()) {
     Toast('昵称不能为空')
     return
   }
-  
-  const updatedUser = updateUser({ nickname: newNickname.value.trim() })
-  user.value = updatedUser
-  showNicknameEdit.value = false
-  Toast('昵称更新成功')
+
+  try {
+    const userId = getUserId()
+    if (userId) {
+      const response = await userAPI.updateUsername(userId, newNickname.value.trim())
+      if (response.code === 200) {
+        const updatedUser = updateUser({
+          nickname: newNickname.value.trim(),
+          username: newNickname.value.trim()
+        })
+        user.value = updatedUser
+        showNicknameEdit.value = false
+        Toast('昵称更新成功')
+      }
+    }
+  } catch (error) {
+    Toast('昵称更新失败')
+  }
 }
 
 // 处理学号点击
 const handleStudentIdClick = () => {
-  newStudentId.value = user.value.studentId
+  newStudentId.value = user.value.studentId || ''
   showStudentIdEdit.value = true
 }
 
 // 保存学号
-const saveStudentId = () => {
+const saveStudentId = async () => {
   if (!newStudentId.value.trim()) {
     Toast('学号不能为空')
     return
   }
-  
+
   // 验证学号格式（简单验证）
   if (!/^\d{8,12}$/.test(newStudentId.value.trim())) {
     Toast('请输入有效的学号')
     return
   }
-  
-  const updatedUser = updateUser({ studentId: newStudentId.value.trim() })
-  user.value = updatedUser
-  showStudentIdEdit.value = false
-  Toast('学号更新成功')
+
+  try {
+    const userId = getUserId()
+    if (userId) {
+      const formData = new FormData()
+      formData.append('studentId', newStudentId.value.trim())
+
+      const response = await userAPI.updateUserInfo(userId, formData)
+      if (response.code === 200) {
+        const updatedUser = updateUser({ studentId: newStudentId.value.trim() })
+        user.value = updatedUser
+        showStudentIdEdit.value = false
+        Toast('学号更新成功')
+      }
+    }
+  } catch (error) {
+    Toast('学号更新失败')
+  }
 }
 
 // 处理手机号点击
@@ -137,72 +303,99 @@ const handlePhoneClick = () => {
 }
 
 // 保存手机号
-const savePhone = () => {
+const savePhone = async () => {
   if (!newPhone.value.trim()) {
     Toast('手机号不能为空')
     return
   }
-  
+
   // 验证手机号格式
   if (!/^1[3-9]\d{9}$/.test(newPhone.value.trim())) {
     Toast('请输入有效的手机号')
     return
   }
-  
-  const updatedUser = updateUser({ phone: newPhone.value.trim() })
-  user.value = updatedUser
-  showPhoneEdit.value = false
-  Toast('手机号更新成功')
+
+  try {
+    const userId = getUserId()
+    if (userId) {
+      const formData = new FormData()
+      formData.append('phone', newPhone.value.trim())
+
+      const response = await userAPI.updateUserInfo(userId, formData)
+      if (response.code === 200) {
+        const updatedUser = updateUser({ phone: newPhone.value.trim() })
+        user.value = updatedUser
+        showPhoneEdit.value = false
+        Toast('手机号更新成功')
+      }
+    }
+  } catch (error) {
+    Toast('手机号更新失败')
+  }
 }
 
 // 处理证明上传
-// const handleProofUpload = (file: any) => {
-//   // Vant Uploader 的 after-read 返回的是包含 file 属性的对象
-//   if (file && file.file) {
-//     const reader = new FileReader()
-//     reader.onload = (e) => {
-//       const base64String = e.target?.result as string
-//       newProof.value = base64String
-      
-//       // 保存证明到用户数据
-//       const updatedUser = updateUser({ proof: base64String })
-//       user.value = updatedUser
-      
-//       Toast('证明文件上传成功')
-//     }
-//     reader.onerror = () => {
-//       Toast('证明文件上传失败，请重试')
-//     }
-//     reader.readAsDataURL(file.file)
-//   } else {
-//     Toast('文件上传失败，请重试')
-//   }
-// }
-// 处理证明上传
-const handleProofUpload = (file: File) => {
-  newProof.value = URL.createObjectURL(file)
-  Toast('证明文件上传成功')
-}
+const handleProofUpload = (file: any) => {
+  if (file && file.file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64String = e.target?.result as string
+      newProof.value = base64String
 
+      const updatedUser = updateUser({ proof: base64String })
+      user.value = updatedUser
+
+      Toast('证明文件上传成功')
+    }
+    reader.onerror = () => {
+      Toast('证明文件上传失败，请重试')
+    }
+    reader.readAsDataURL(file.file)
+  } else {
+    Toast('文件上传失败，请重试')
+  }
+}
 
 // 提交修改
-const handleSubmit = () => {
+const handleSubmit = async () => {
   Dialog.confirm({
     title: '确认提交',
     message: '确认提交个人信息修改？',
-  }).then(() => {
-    // 保存所有修改到用户数据
-    const updatedData = {
-      avatar: user.value.avatar,
-      nickname: user.value.nickname,
-      studentId: user.value.studentId,
-      phone: user.value.phone,
-      proof: newProof.value || user.value.proof
+  }).then(async () => {
+    try {
+      const userId = getUserId()
+      if (userId) {
+        const formData = new FormData()
+
+        if (user.value.username) {
+          formData.append('username', user.value.username)
+        }
+        if (user.value.phone) {
+          formData.append('phone', user.value.phone)
+        }
+        if (user.value.studentId) {
+          formData.append('studentId', user.value.studentId)
+        }
+
+        const response = await userAPI.updateUserInfo(userId, formData)
+        if (response.code === 200) {
+          updateUser({
+            avatar: user.value.avatar,
+            nickname: user.value.nickname,
+            username: user.value.username,
+            studentId: user.value.studentId,
+            phone: user.value.phone,
+            proof: newProof.value || user.value.proof
+          })
+          Toast('个人信息提交成功')
+          router.back()
+        } else {
+          Toast('个人信息提交失败')
+        }
+      }
+    } catch (error) {
+      Toast('个人信息提交失败')
     }
-    
-    updateUser(updatedData)
-    Toast('个人信息提交成功')
-    router.back()
   }).catch(() => {
     // on cancel
   })
@@ -220,160 +413,6 @@ const handleCancel = () => {
   })
 }
 </script>
-
-<template>
-  <div class="profile">
-    <van-nav-bar 
-      title="我的信息" 
-      left-text="返回" 
-      left-arrow 
-      @click-left="handleBack" 
-    />
-    
-    <div class="profile-content">
-      <!-- 头像区域 -->
-      <van-cell-group inset>
-        <van-cell title="头像" :border="false">
-          <template #right-icon>
-            <van-uploader 
-              :after-read="handleAvatarUpload" 
-              :max-count="1" 
-              :max-size="2 * 1024 * 1024"
-              @oversize="() => Toast('头像大小不能超过2MB')"
-            >
-              <div class="avatar-upload">
-                <img :src="user.avatar" alt="头像" />
-                <div v-if="isUploading" class="uploading-mask">
-                  <van-loading size="20" />
-                </div>
-              </div>
-            </van-uploader>
-          </template>
-        </van-cell>
-      </van-cell-group>
-      
-      <!-- 个人信息 -->
-      <van-cell-group inset>
-  <van-cell 
-    title="昵称" 
-    :value="user.nickname" 
-    is-link 
-    @click="handleNicknameClick"
-  />
-  <van-cell 
-    title="学号" 
-    :value="user.studentId" 
-    is-link 
-    @click="handleStudentIdClick"
-  />
-  <van-cell 
-    title="手机号" 
-    :value="user.phone || '未绑定'" 
-    is-link 
-    :border="false"
-    @click="handlePhoneClick"
-  />
-</van-cell-group>
-      
-      <!-- 上传证明 -->
-      <van-cell-group inset>
-        <van-cell title="上传学生证明" :border="false">
-          <template #right-icon>
-            <van-uploader 
-              :after-read="(file: any) => handleProofUpload(file.file)" 
-              :max-count="1" 
-              :max-size="5 * 1024 * 1024"
-              @oversize="() => Toast('证明文件大小不能超过5MB')"
-            >
-              <van-button type="primary" size="small">选择文件</van-button>
-            </van-uploader>
-          </template>
-        </van-cell>
-        <div v-if="newProof" class="proof-preview">
-          <img :src="newProof" alt="学生证明" />
-        </div>
-      </van-cell-group>
-      
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <van-button type="primary" size="large" @click="handleSubmit">提交</van-button>
-        <van-button type="default" size="large" @click="handleCancel">取消</van-button>
-      </div>
-    </div>
-    
-    <!-- 学号编辑浮窗 -->
-    <van-popup 
-      v-model:show="showStudentIdEdit" 
-      position="bottom" 
-      :style="{ height: '30%' }"
-      round
-      class="popup"
-    >
-      <div class="student-id-edit">
-        <h3>修改学号</h3>
-        <van-field 
-          v-model="newStudentId" 
-          placeholder="请输入学号" 
-          maxlength="12"
-          clearable
-        />
-        <p class="hint">请输入8-12位数字的学号</p>
-        <div class="edit-actions">
-          <van-button type="default" @click="showStudentIdEdit = false">取消</van-button>
-          <van-button type="primary" @click="saveStudentId">确定</van-button>
-        </div>
-      </div>
-    </van-popup>
-    <!-- 昵称编辑浮窗 -->
-<van-popup 
-  v-model:show="showNicknameEdit" 
-  position="bottom" 
-  :style="{ height: '30%' }"
-  round
-  class="popup"
->
-  <div class="nickname-edit">
-    <h3>修改昵称</h3>
-    <van-field 
-      v-model="newNickname" 
-      placeholder="请输入新昵称" 
-      maxlength="10"
-      clearable
-    />
-    <p class="hint">昵称最多10个字符</p>
-    <div class="edit-actions">
-      <van-button type="default" @click="showNicknameEdit = false">取消</van-button>
-      <van-button type="primary" @click="saveNickname">确定</van-button>
-    </div>
-  </div>
-</van-popup>
-
-<!-- 手机号编辑浮窗 -->
-<van-popup 
-  v-model:show="showPhoneEdit" 
-  position="bottom" 
-  :style="{ height: '30%' }"
-  round
-  class="popup"
->
-  <div class="phone-edit">
-    <h3>绑定手机号</h3>
-    <van-field 
-      v-model="newPhone" 
-      type="tel"
-      placeholder="请输入手机号" 
-      maxlength="11"
-      clearable
-    />
-    <p class="hint">请输入11位手机号码</p>
-    <div class="edit-actions">
-      <van-button type="default" @click="showPhoneEdit = false">取消</van-button>
-      <van-button type="primary" @click="savePhone">确定</van-button>
-    </div>
-  </div>
-</van-popup>
-  </div>
-</template>
 
 <style scoped>
 .profile {
@@ -457,6 +496,7 @@ const handleCancel = () => {
 .edit-actions .van-button {
   width: 45%;
 }
+
 .phone-edit {
   padding: 20px;
   height: 100%;

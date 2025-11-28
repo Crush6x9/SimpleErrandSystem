@@ -1,24 +1,123 @@
+<template>
+  <div class="page-container">
+    <van-nav-bar title="发布跑腿" left-arrow @click-left="router.back()" safe-area-inset-top />
+
+    <div class="content">
+      <div class="card">
+        <van-form @submit="submit">
+          <van-field 
+            v-model="form.title" 
+            label="任务标题" 
+            placeholder="例如：帮我买奶茶" 
+            required 
+            maxlength="20"
+            show-word-limit
+          />
+
+          <van-field
+            v-model="form.description"
+            rows="3"
+            autosize
+            label="订单内容"
+            type="textarea"
+            placeholder="请详细描述您需要的帮助内容..."
+            required
+            maxlength="200"
+            show-word-limit
+          />
+          
+          <van-field 
+            v-model="form.address" 
+            label="送达地址" 
+            placeholder="详细地址（如：图书馆3楼自习室）" 
+            required 
+          />
+          
+          <van-field
+            v-model="form.phone"
+            type="tel"
+            label="手机号码"
+            placeholder="请输入您的手机号"
+            required
+            maxlength="11"
+          />
+          
+          <van-field 
+            v-model="form.reward" 
+            label="悬赏金额" 
+            type="text" 
+            placeholder="0.00"
+            required
+            @update:model-value="handlePriceInput"
+            @blur="handlePriceBlur"
+          >
+            <template #left-icon><span class="text-lg">¥</span></template>
+          </van-field>
+
+          <div class="custom-field">
+            <div class="van-field">
+              <div class="van-field__label">期望时间</div>
+              <div class="van-field__body">
+                <input
+                  :value="dateToInputFormat(form.helpTime)"
+                  @input="handleDateTimeInput"
+                  type="datetime-local"
+                  :min="getCurrentDateTimeString()"
+                  class="datetime-input"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-actions">
+            <div class="price-summary">
+              <span class="label">悬赏金额:</span>
+              <span class="price">¥{{ roundPrice(form.reward) }}</span>
+            </div>
+            <van-button 
+              round 
+              block 
+              type="primary" 
+              native-type="submit" 
+              size="large"
+              class="confirm-button"
+            >
+              确认发布
+            </van-button>
+          </div>
+        </van-form>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast } from 'vant'
+import { orderAPI } from '@/api'
+import { isAuthenticated } from '@/utils/auth'
 
 const router = useRouter()
 
-// 表单数据
+// 表单数据 - 字段名匹配后端OrderRequest
 const form = reactive({
   title: '',
   description: '',
   address: '',
+  helpTime: new Date(),
   phone: '',
-  price: '',
-  expectTime: new Date()
+  reward: ''
 })
 
-// 格式化日期时间显示
-const formattedDateTime = computed(() => {
-  const date = form.expectTime
-  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+// 组件挂载时检查登录状态
+onMounted(() => {
+  if (!isAuthenticated()) {
+    Toast('请先登录')
+    router.push('/login')
+    return
+  }
 })
 
 // 将Date对象转换为input的datetime-local格式
@@ -36,7 +135,7 @@ const getCurrentDateTimeString = () => {
 const handleDateTimeInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.value) {
-    form.expectTime = new Date(target.value)
+    form.helpTime = new Date(target.value)
   }
 }
 
@@ -77,18 +176,30 @@ const handlePriceInput = (value: string) => {
   // 先格式化输入
   const formatted = formatPrice(value)
   // 然后四舍五入
-  form.price = roundPrice(formatted)
+  form.reward = roundPrice(formatted)
 }
 
 // 处理价格失去焦点事件，确保显示格式正确
 const handlePriceBlur = () => {
-  if (form.price) {
-    form.price = roundPrice(form.price)
+  if (form.reward) {
+    form.reward = roundPrice(form.reward)
   }
 }
 
+// 将Date转换为后端需要的LocalDateTime格式
+const formatToLocalDateTime = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const day = date.getDate().toString().padStart(2, '0')
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  const seconds = date.getSeconds().toString().padStart(2, '0')
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+}
+
 // 提交表单
-const submit = () => {
+const submit = async () => {
   // 表单验证
   if (!form.title.trim()) {
     Toast('请输入任务标题')
@@ -115,163 +226,62 @@ const submit = () => {
     return
   }
   
-  if (!form.price || parseFloat(form.price) <= 0) {
+  if (!form.reward || parseFloat(form.reward) <= 0) {
     Toast('请输入有效的悬赏金额')
     return
   }
   
-  // 确保金额四舍五入到两位小数
-  const roundedPrice = roundPrice(form.price)
+  const roundedPrice = roundPrice(form.reward)
   if (!roundedPrice || parseFloat(roundedPrice) <= 0) {
     Toast('请输入有效的悬赏金额')
     return
   }
   
-  // 显示加载状态
-  Toast.loading({
+  // 检查帮助时间是否在当前时间之后
+  if (form.helpTime <= new Date()) {
+    Toast('帮助时间必须晚于当前时间')
+    return
+  }
+
+  const toast = Toast.loading({
     message: '发布中...',
     forbidClick: true,
     duration: 0
   })
   
-   // 模拟API调用
-  setTimeout(() => {
+  try {
+    // 调用发布订单API - 使用正确的字段名匹配后端OrderRequest
+    const response = await orderAPI.publish({
+      title: form.title.trim(),
+      address: form.address.trim(),
+      description: form.description.trim(),
+      helpTime: formatToLocalDateTime(form.helpTime),
+      phone: form.phone.trim(),
+      reward: parseFloat(roundedPrice)
+    })
+    
     Toast.clear()
     
-     // 创建订单对象
-    const newOrder = {
-      id: Date.now(), // 使用时间戳作为临时ID
-      title: form.title,
-      description: form.description,
-      address: form.address,
-      phone: form.phone,
-      price: parseFloat(roundedPrice),
-      status: 0, // 待帮助状态
-      createTime: new Date().toISOString(),
-      publisherName: '当前用户', // 这里应该从登录状态获取
-      expectTime: form.expectTime.toISOString(),
-      hasRated: false
+    if (response.code === 200) {
+      Toast.success('发布成功！')
+      // 跳转到首页
+      router.push('/home')
+    } else {
+      Toast(response.message || '发布失败，请重试')
     }
-    
-    // 保存到本地存储
-    const savedOrders = localStorage.getItem('orders')
-    let orders = []
-    
-    if (savedOrders) {
-      orders = JSON.parse(savedOrders)
+  } catch (error: any) {
+    Toast.clear()
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '发布失败，请重试')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
     }
-    
-    orders.push(newOrder)
-    localStorage.setItem('orders', JSON.stringify(orders))
-    
-    Toast.success('发布成功！')
-    
-    // 跳转到订单列表
-    router.push('/help')
-  }, 1500)
+  }
 }
 </script>
-
-<template>
-  <div class="page-container">
-    <van-nav-bar title="发布跑腿" left-arrow @click-left="router.back()" safe-area-inset-top />
-
-    <div class="content">
-      <div class="card">
-        <van-form @submit="submit">
-          <!-- 任务标题 -->
-          <van-field 
-            v-model="form.title" 
-            label="任务标题" 
-            placeholder="例如：帮我买奶茶" 
-            required 
-            maxlength="20"
-            show-word-limit
-          />
-          
-          <!-- 订单内容 -->
-          <van-field
-            v-model="form.description"
-            rows="3"
-            autosize
-            label="订单内容"
-            type="textarea"
-            placeholder="请详细描述您需要的帮助内容..."
-            required
-            maxlength="200"
-            show-word-limit
-          />
-          
-          <!-- 送达地址 -->
-          <van-field 
-            v-model="form.address" 
-            label="送达地址" 
-            placeholder="详细地址（如：图书馆3楼自习室）" 
-            required 
-          />
-          
-          <!-- 手机号码 -->
-          <van-field
-            v-model="form.phone"
-            type="tel"
-            label="手机号码"
-            placeholder="请输入您的手机号"
-            required
-            maxlength="11"
-          />
-          
-          <!-- 悬赏金额 -->
-          <van-field 
-            v-model="form.price" 
-            label="悬赏金额" 
-            type="text" 
-            placeholder="0.00"
-            required
-            @update:model-value="handlePriceInput"
-            @blur="handlePriceBlur"
-          >
-            <template #left-icon><span class="text-lg">¥</span></template>
-          </van-field>
-          
-          <!-- 期望时间 - 使用原生input -->
-          <div class="custom-field">
-            <div class="van-field">
-              <div class="van-field__label">期望时间</div>
-              <div class="van-field__body">
-                <input
-                  :value="dateToInputFormat(form.expectTime)"
-                  @input="handleDateTimeInput"
-                  type="datetime-local"
-                  :min="getCurrentDateTimeString()"
-                  class="datetime-input"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-          
-          <!-- 底部确认区域 -->
-          <div class="bottom-actions">
-            <div class="price-summary">
-              <span class="label">悬赏金额:</span>
-              <span class="price">¥{{ roundPrice(form.price) }}</span>
-            </div>
-            <van-button 
-              round 
-              block 
-              type="primary" 
-              native-type="submit" 
-              size="large"
-              class="confirm-button"
-            >
-              确认发布
-            </van-button>
-          </div>
-        </van-form>
-      </div>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .page-container {

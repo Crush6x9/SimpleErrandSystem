@@ -7,7 +7,6 @@
       @click-left="handleBack" 
     />
     <div class="register-child-container">
-    <!-- 背景图 -->
     <div class="background">
       <van-image src="/register-bg.png" width="100%" fit="cover" alt="背景" />
     </div>
@@ -17,13 +16,11 @@
         <h1 class="title">注册账号</h1>
         <p class="section-title">请输入手机号用于注册</p>
 
-        <!-- 手机号输入 -->
         <van-cell-group inset>
           <van-field v-model="phone" type="tel" label="手机号" placeholder="请输入手机号"
             :rules="[{ required: true, message: '请填写手机号' }]" />
         </van-cell-group>
 
-        <!-- 密码输入 -->
         <h1 class="title">设置密码</h1>
         <p class="section-title">设置登录密码用于登录</p>
         <van-cell-group inset>
@@ -31,7 +28,6 @@
             :right-icon="isPasswordVisible ? 'eye-o' : 'closed-eye'" @click-right-icon="togglePasswordVisibility" />
         </van-cell-group>
 
-        <!-- 协议勾选 -->
         <div class="agreement">
           <van-checkbox v-model="agreed" shape="square">
             我已阅读并同意
@@ -41,7 +37,6 @@
           </van-checkbox>
         </div>
 
-        <!-- 注册按钮 -->
         <div class="register-button">
           <van-button type="primary" size="large" :disabled="!canRegister" @click="handleRegister">
             同意协议并注册
@@ -50,7 +45,6 @@
       </div>
     </div>
     
-    <!-- 验证码输入 Dialog -->
     <van-dialog
       v-model:show="showVerificationDialogVisible"
       title="输入验证码"
@@ -92,6 +86,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast, Dialog } from 'vant'
+import { authAPI } from '@/api'
 
 // 处理返回
 const handleBack = () => {
@@ -153,7 +148,7 @@ const canRegister = computed(() => {
     agreed.value
 })
 
-// 注册处理
+// 注册处理 - 发送验证码
 const handleRegister = async () => {
   if (!/^1[3-9]\d{9}$/.test(phone.value)) {
     Toast('请输入有效的手机号')
@@ -171,41 +166,48 @@ const handleRegister = async () => {
   }
 
   const toast = Toast.loading({
-    message: '注册中...',
+    message: '发送验证码中...',
     forbidClick: true,
     duration: 0
   })
 
   try {
-    // 模拟API调用 - 实际使用时替换为axios请求
-    // POST /api/register { phone, password }
-    console.log('调用注册API:', { phone: phone.value, password: password.value })
-
-    // 模拟发送验证码
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    // 调用发送验证码API
+    const response = await authAPI.sendCode({
+      phone: phone.value,
+      type: 'register'
+    })
 
     Toast.clear()
+    
+    // 检查响应状态
+    if (response.code !== 200) {
+      Toast(response.message || '发送验证码失败')
+      return
+    }
+    
     Toast('验证码已发送')
     
-    // 重置验证码
     verificationCodeArray.value = ['', '', '', '', '', '']
-    
-    // 显示验证码对话框
     showVerificationDialogVisible.value = true
-    
-    // 启动倒计时
     startResendCountdown()
     
-    // 聚焦第一个输入框
     setTimeout(() => {
       if (codeInputs.value[0]) {
         codeInputs.value[0].focus()
       }
     }, 300)
     
-  } catch (error) {
+  } catch (error: any) {
     Toast.clear()
-    Toast('注册失败，请重试')
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '发送验证码失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 
@@ -241,7 +243,7 @@ const handleCodeKeyDown = (index: number, event: KeyboardEvent) => {
   }
 }
 
-// 验证验证码
+// 验证验证码并注册
 const verifyCode = async () => {
   const verificationCode = verificationCodeArray.value.join('')
   
@@ -251,20 +253,44 @@ const verifyCode = async () => {
   }
   
   try {
-    console.log('调用验证验证码API:', { 
-      phone: phone.value, 
-      code: verificationCode, 
-      type: 'register' 
+    // 验证验证码
+    const verifyResponse = await authAPI.verifyCode({
+      phone: phone.value,
+      code: verificationCode,
+      type: 'register'
     })
     
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (verifyResponse.code !== 200) {
+      Toast(verifyResponse.message || '验证码错误')
+      return
+    }
+    
+    // 验证码正确，调用注册API
+    const registerResponse = await authAPI.register({
+      phone: phone.value,
+      password: password.value,
+      verifyCode: verificationCode
+    })
+    
+    if (registerResponse.code !== 200) {
+      Toast(registerResponse.message || '注册失败')
+      return
+    }
     
     showVerificationDialogVisible.value = false
     Toast('注册成功')
     
+    // 跳转到登录页面
     router.push({ name: 'Login' })
-  } catch (error) {
-    Toast('验证码错误')
+  } catch (error: any) {
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '注册失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 
@@ -304,10 +330,19 @@ const resendVerificationCode = async () => {
       duration: 0
     })
     
-    // 模拟重新发送验证码
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    // 调用发送验证码API
+    const response = await authAPI.sendCode({
+      phone: phone.value,
+      type: 'register'
+    })
     
     Toast.clear()
+    
+    if (response.code !== 200) {
+      Toast(response.message || '发送验证码失败')
+      return
+    }
+    
     Toast('验证码已重新发送')
     
     // 重置验证码
@@ -320,8 +355,16 @@ const resendVerificationCode = async () => {
     
     // 重新启动倒计时
     startResendCountdown()
-  } catch (error) {
-    Toast('发送失败，请重试')
+  } catch (error: any) {
+    Toast.clear()
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '发送验证码失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 

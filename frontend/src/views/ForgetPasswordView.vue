@@ -10,7 +10,6 @@
     <div class="form-container">
       <h1 class="title">忘记密码</h1>
       
-      <!-- 手机号输入 -->
       <van-cell-group inset>
         <van-field
           v-model="phone"
@@ -20,13 +19,12 @@
           :rules="[{ required: true, message: '请填写手机号' }]"
         />
       </van-cell-group>
-      
-      <!-- 验证码按钮 -->
+
       <div class="verify-button">
         <van-button 
           type="primary" 
           size="large" 
-          :disabled="!/^1[3-9]\d{9}$/.test(phone)"
+          :disabled="!/^1[3-9]\d{9}$/.test(phone) || countdown > 0"
           @click="sendVerificationCode"
         >
           {{ countdown > 0 ? `${countdown}秒后重发` : '获取验证码' }}
@@ -34,7 +32,6 @@
       </div>
     </div>
     
-    <!-- 验证码输入 Dialog -->
     <van-dialog
       v-model:show="showVerificationDialogVisible"
       title="输入验证码"
@@ -68,7 +65,6 @@
         </van-button>
       </div>
     </van-dialog>
-    <!-- 背景图 -->
     <div class="background">
       <van-image src="/password-bg.png" width="100%" fit="cover" alt="背景" />
     </div>
@@ -79,6 +75,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast } from 'vant'
+import { authAPI } from '@/api'
 
 // 处理返回
 const handleBack = () => {
@@ -96,52 +93,65 @@ const codeInputs = ref<HTMLInputElement[]>([])
 const resendCountdown = ref(60)
 const resendEnabled = ref(false)
 let countdownTimer: number | null = null
+let resendTimer: number | null = null
 
 // 发送验证码
 const sendVerificationCode = async () => {
   if (countdown.value > 0) return
   
-  // 前端验证
   if (!/^1[3-9]\d{9}$/.test(phone.value)) {
     Toast('请输入有效的手机号')
     return
   }
 
-  // 显示加载状态
   const toast = Toast.loading({
-    message: '发送中...',
+    message: '检查手机号中...',
     forbidClick: true,
     duration: 0
   })
 
   try {
-    // 模拟API调用 - 实际使用时替换为axios请求
-    // POST /api/send-verification { phone, type: 'forget' }
-    console.log('调用发送验证码API:', { phone: phone.value, type: 'forget' })
+    // 先检查手机号是否存在
+    const checkResponse = await authAPI.checkPhone(phone.value)
     
-    // 模拟异步请求
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    if (checkResponse.code !== 200) {
+      Toast.clear()
+      Toast(checkResponse.message || '手机号未注册')
+      return
+    }
+
+    Toast.loading({
+      message: '发送验证码中...',
+      forbidClick: true,
+      duration: 0
+    })
+
+    // 调用发送验证码API
+    const response = await authAPI.sendCode({
+      phone: phone.value,
+      type: 'forget'
+    })
     
     Toast.clear()
+    
+    if (response.code !== 200) {
+      Toast(response.message || '发送验证码失败')
+      return
+    }
+    
     Toast('验证码已发送')
     
-    // 重置验证码
     verificationCodeArray.value = ['', '', '', '', '', '']
-    
-    // 显示验证码对话框
     showVerificationDialogVisible.value = true
-    
-    // 启动倒计时
     startResendCountdown()
     
-    // 聚焦第一个输入框
     setTimeout(() => {
       if (codeInputs.value[0]) {
         codeInputs.value[0].focus()
       }
     }, 300)
     
-    // 启动倒计时
+    // 启动按钮倒计时
     countdown.value = 60
     const timer = setInterval(() => {
       countdown.value--
@@ -149,9 +159,16 @@ const sendVerificationCode = async () => {
         clearInterval(timer)
       }
     }, 1000)
-  } catch (error) {
+  } catch (error: any) {
     Toast.clear()
-    Toast('发送失败，请重试')
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '发送验证码失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 
@@ -197,20 +214,37 @@ const verifyCode = async () => {
   }
   
   try {
-    // 模拟API调用 - 实际使用时替换为axios请求
-    // POST /api/verify-code { phone, code, type: 'forget' }
-    console.log('调用验证验证码API:', { phone: phone.value, code: verificationCode, type: 'forget' })
+    // 调用验证验证码API
+    const response = await authAPI.verifyCode({
+      phone: phone.value,
+      code: verificationCode,
+      type: 'forget'
+    })
     
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (response.code !== 200) {
+      Toast(response.message || '验证码错误')
+      return
+    }
     
     showVerificationDialogVisible.value = false
+    Toast('验证成功')
+    
     // 验证成功，跳转到设置新密码页面
     router.push({ 
       name: 'SetNewPassword', 
-      query: { phone: phone.value } 
+      query: { 
+        phone: phone.value
+       } 
     })
-  } catch (error) {
-    Toast('验证码错误')
+  } catch (error: any) {
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '验证码错误')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 
@@ -221,19 +255,19 @@ const startResendCountdown = () => {
   resendEnabled.value = false
   
   // 清除现有计时器
-  if (countdownTimer) {
-    window.clearInterval(countdownTimer)
-    countdownTimer = null
+  if (resendTimer) {
+    window.clearInterval(resendTimer)
+    resendTimer = null
   }
   
   // 启动新计时器
-  countdownTimer = window.setInterval(() => {
+  resendTimer = window.setInterval(() => {
     resendCountdown.value--
     if (resendCountdown.value <= 0) {
       resendEnabled.value = true
-      if (countdownTimer) {
-        window.clearInterval(countdownTimer)
-        countdownTimer = null
+      if (resendTimer) {
+        window.clearInterval(resendTimer)
+        resendTimer = null
       }
     }
   }, 1000)
@@ -250,10 +284,19 @@ const resendVerificationCode = async () => {
       duration: 0
     })
     
-    // 模拟重新发送验证码
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    // 调用发送验证码API
+    const response = await authAPI.sendCode({
+      phone: phone.value,
+      type: 'forget'
+    })
     
     Toast.clear()
+    
+    if (response.code !== 200) {
+      Toast(response.message || '发送验证码失败')
+      return
+    }
+    
     Toast('验证码已重新发送')
     
     // 重置验证码
@@ -266,8 +309,16 @@ const resendVerificationCode = async () => {
     
     // 重新启动倒计时
     startResendCountdown()
-  } catch (error) {
-    Toast('发送失败，请重试')
+  } catch (error: any) {
+    Toast.clear()
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '发送验证码失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 
@@ -277,6 +328,10 @@ onMounted(() => {
     if (countdownTimer) {
       window.clearInterval(countdownTimer)
       countdownTimer = null
+    }
+    if (resendTimer) {
+      window.clearInterval(resendTimer)
+      resendTimer = null
     }
   })
 })

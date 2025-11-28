@@ -22,43 +22,63 @@ api.interceptors.request.use(
 );
 
 // 响应拦截器 - 处理错误
+// 响应拦截器 - 处理错误
 api.interceptors.response.use(
   (response) => {
+    console.log('API响应成功:', {
+      url: response.config.url,
+      method: response.config.method,
+      data: response.data
+    })
+    
     // 假设后端返回格式为 { code: number, message: string, data: any }
     if (response.data && response.data.code !== 200 && response.data.code !== 0) {
-      Toast(response.data.message || '请求失败');
-      return Promise.reject(new Error(response.data.message || '请求失败'));
+      const errorMsg = response.data.message || '请求失败'
+      Toast(errorMsg)
+      return Promise.reject(new Error(errorMsg))
     }
-    return response.data;
+    return response.data
   },
   (error) => {
+    console.error('API请求错误详情:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    })
+    
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          Toast('登录已过期，请重新登录');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userId');
-          localStorage.removeItem('userPhone');
-          window.location.href = '/login';
-          break;
+          Toast('登录已过期，请重新登录')
+          localStorage.removeItem('authToken')
+          localStorage.removeItem('userId')
+          localStorage.removeItem('userPhone')
+          window.location.href = '/login'
+          break
         case 403:
-          Toast('没有权限访问');
-          break;
+          Toast('没有权限访问')
+          break
         case 404:
-          Toast('请求的资源不存在');
-          break;
+          Toast('请求的资源不存在')
+          break
         case 500:
-          Toast('服务器错误，请稍后重试');
-          break;
+          Toast('服务器错误，请稍后重试')
+          break
         default:
-          Toast('网络错误，请稍后重试');
+          Toast(`网络错误: ${error.response.status}`)
       }
+    } else if (error.request) {
+      console.error('没有收到响应:', error.request)
+      Toast('网络连接失败，请检查网络连接')
     } else {
-      Toast('网络错误，请检查网络连接');
+      Toast('请求配置错误')
     }
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
 // 认证相关接口
 export const authAPI = {
@@ -115,8 +135,14 @@ export const userAPI = {
 // 订单相关接口
 export const orderAPI = {
   // 发布订单
-  publish: (data: any) =>
-    api.post('/orders/publish', data),
+  publish: (data: {
+    title: string;
+    address: string;
+    description: string;
+    helpTime: string;
+    phone: string;
+    reward: number;
+  }) => api.post('/orders/publish', data),
   
   // 接取订单
   accept: (orderId: string) =>
@@ -130,13 +156,29 @@ export const orderAPI = {
   complete: (orderId: string) =>
     api.put(`/orders/${orderId}/complete`),
   
-  // 删除订单
-  delete: (orderId: string) =>
-    api.delete(`/orders/${orderId}`),
+  // 取消订单
+  cancel: (orderId: string) =>
+    api.delete(`/orders/${orderId}/cancel`),
   
-  // 查询订单列表
-  getList: (params: any) =>
-    api.get('/orders/list', { params }),
+  // 查询订单列表 - 修正为 GET 请求并传递参数
+  getList: (params: {
+    type?: string;
+    page?: number;
+    size?: number;
+  }) => {
+    // 将 type 转换为后端需要的格式
+    const queryParams: any = {
+      page: params.page || 1,
+      size: params.size || 10
+    };
+    
+    // 如果有类型参数，添加到查询参数中
+    if (params.type && params.type !== 'all') {
+      queryParams.type = params.type;
+    }
+    
+    return api.get('/orders/list', { params: queryParams });
+  },
   
   // 获取订单详情
   getDetail: (orderId: string) =>
@@ -162,19 +204,20 @@ export const walletAPI = {
     api.get('/wallet/withdrawals'),
   
   // 获取账单明细
-  getBills: (params: any) =>
+  getBills: (params: { page?: number; size?: number }) =>
     api.get('/wallet/bills', { params }),
 };
+
 
 // 评价相关接口
 export const evaluationAPI = {
   // 订单评价
-  evaluate: (orderId: string, data: any) =>
-    api.post(`/evaluations/${orderId}/evaluate`, data),
+  evaluate: (orderId: string, data: { review: string }) =>
+    api.post(`/evaluations/${orderId}`, data),
   
   // 获取订单评价
   getEvaluation: (orderId: string) =>
-    api.get(`/evaluations/${orderId}/detail`),
+    api.get(`/evaluations/${orderId}`),
   
   // 获取评价统计
   getStats: (userId: string) =>
