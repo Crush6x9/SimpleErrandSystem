@@ -39,16 +39,6 @@ public class UserServiceImpl implements UserService {
     @Value("${app.upload.max-file-size:5242880}")
     private long maxFileSize;
 
-    private boolean isValidPhone(String phone) {
-        String pattern = "^1[3-9]\\d{9}$";
-        return phone.matches(pattern);
-    }
-
-    private boolean isValidPassword(String password) {
-        String pattern = "^(?=.*[A-Za-z])(?=.*\\d).{6,20}$";
-        return password.matches(pattern);
-    }
-
     @Override
     public Result register(RegisterRequest request) {
         Result verifyResult = verifyCodeUtil.verifyCode(request.getPhone(), request.getVerifyCode());
@@ -78,7 +68,7 @@ public class UserServiceImpl implements UserService {
             user.setUsername(defaultUsername);
 
             // 设置默认头像路径
-            String defaultAvatarPath = "avatar/A-Default.jpg";
+            String defaultAvatarPath = "avatar/A-Default.png";
             user.setAvatar(defaultAvatarPath);
 
             // 更新用户信息（包含默认用户名和头像）
@@ -132,11 +122,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public Result checkPhoneExists(ForgetPasswordRequest request) {
         try {
-            // 验证手机号格式
-            if (!isValidPhone(request.getPhone())) {
-                return Result.error("手机号格式不正确");
-            }
-
             // 检查手机号是否存在
             User user = userMapper.findByPhone(request.getPhone());
             if (user == null) {
@@ -154,16 +139,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public Result resetPassword(ResetPasswordRequest request) {
         try {
-            // 验证手机号格式
-            if (!isValidPhone(request.getPhone())) {
-                return Result.error("手机号格式不正确");
-            }
-
-            // 验证密码格式
-            if (!isValidPassword(request.getNewPassword())) {
-                return Result.error("密码需包含字母和数字，长度6-20位");
-            }
-
             // 检查用户是否存在
             User user = userMapper.findByPhone(request.getPhone());
             if (user == null) {
@@ -318,12 +293,8 @@ public class UserServiceImpl implements UserService {
                 user.setUsername(request.getUsername().trim());
             }
 
-            // 验证手机号格式和唯一性
+            // 验证手机号唯一性
             if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-                if (!isValidPhone(request.getPhone())) {
-                    return Result.error("手机号格式不正确");
-                }
-                // 检查手机号是否已被其他用户使用
                 User existingUser = userMapper.findByPhone(request.getPhone());
                 if (existingUser != null && !existingUser.getUserId().equals(userId)) {
                     return Result.error("手机号已被其他用户使用");
@@ -468,7 +439,7 @@ public class UserServiceImpl implements UserService {
         if ("avatar".equals(type)) {
             prefix = "A" + userId;
         } else if ("certificate".equals(type)) {
-            prefix = "V" + userId;
+            prefix = "C" + userId;
         } else {
             prefix = UUID.randomUUID().toString(); // 其他类型使用UUID
         }
