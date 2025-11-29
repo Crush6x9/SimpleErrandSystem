@@ -1,40 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { isAuthenticated, logout } from '@/utils/auth'
-import { Dialog, Toast } from 'vant'
-
-const router = useRouter()
-const isAuthenticatedRef = ref(false)
-// 处理返回
-const handleBack = () => {
-  router.back()
-}
-// 检查登录状态
-onMounted(() => {
-  isAuthenticatedRef.value = isAuthenticated()
-})
-
-// 处理登录/注册按钮点击
-const handleAuthClick = () => {
-  router.push({ name: 'Login',query: { redirect: '/home' }  })
-}
-
-// 处理退出点击
-const handleLogout = () => {
-  Dialog.confirm({
-    title: '退出登录',
-    message: '确定要退出登录吗？',
-  }).then(() => {
-    logout()
-    isAuthenticatedRef.value = false
-    Toast('已退出登录')
-  }).catch(() => {
-    // 用户点击取消
-  })
-}
-</script>
-
 <template>
   <div class="home">
         <van-nav-bar 
@@ -82,6 +45,45 @@ const handleLogout = () => {
     </van-grid>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { isAuthenticated, logout } from '@/utils/auth'
+import { Dialog, Toast } from 'vant'
+
+const router = useRouter()
+const isAuthenticatedRef = ref(false)
+// 处理返回
+const handleBack = () => {
+  router.back()
+}
+// 检查登录状态
+onMounted(() => {
+  isAuthenticatedRef.value = isAuthenticated()
+})
+
+// 处理登录/注册按钮点击
+const handleAuthClick = () => {
+  router.push({ name: 'Login',query: { redirect: '/home' }  })
+}
+
+// 处理退出点击
+const handleLogout = () => {
+  Dialog.confirm({
+    title: '退出登录',
+    message: '确定要退出登录吗？',
+  }).then(() => {
+    logout()
+    isAuthenticatedRef.value = false
+    Toast('已退出登录')
+  }).catch(() => {
+    // 用户点击取消
+  })
+}
+</script>
+
+
 
 <style scoped>
 .home_card {

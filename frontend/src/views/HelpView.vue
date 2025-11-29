@@ -1,7 +1,6 @@
-<!-- src/views/AllOrders.vue -->
 <template>
   <div class="all-orders-page">
-        <van-nav-bar 
+    <van-nav-bar 
       title="互助" 
       left-text="返回" 
       left-arrow 
@@ -17,15 +16,15 @@
       </div>
     </div>
 
-<div class="publish-section">
-  <van-button round block type="primary" size="large" icon="contact" @click="handleAuth" class="publish-btn">
+    <div class="publish-section">
+      <van-button round block type="primary" size="large" icon="contact" @click="handleAuth" class="publish-btn">
         <span class="btn-text">身份认证</span>
       </van-button>
       <van-button round block type="danger" size="large" icon="add-o" @click="handlePublish" class="publish-btn">
         <span class="btn-text">发布订单</span>
       </van-button>
-      
     </div>
+
     <div class="scroll-container">
       <div class="content">
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
@@ -66,121 +65,59 @@
                 </van-button>
               </div>
             </div>
+
+            <!-- 空状态提示 -->
+            <div v-if="displayOrders.length === 0" class="empty-state">
+              <van-image width="100" src="/empty-order.png" />
+              <p>暂无订单数据</p>
+              <van-button type="primary" @click="handlePublish">发布订单</van-button>
+            </div>
           </van-list>
         </van-pull-refresh>
       </div>
     </div>
-    
-
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { isAuthenticated } from '@/utils/auth' // 导入登录检查函数
+import { isAuthenticated, getUserId } from '@/utils/auth'
 import { Toast, Dialog } from 'vant'
-
-// 处理返回
-const handleBack = () => {
-  router.back()
-}
-
-// 发布按钮点击事件
-const handlePublish = () => {
-  if (isAuthenticated()) {
-    router.push('/order/create')
-  } else {
-    // 未登录时跳转到登录页，并携带重定向参数
-    router.push({ 
-      name: 'Login', 
-      query: { redirect: '/order/create' } 
-    })
-  }
-}
+import { orderAPI } from '@/api'
 
 const router = useRouter()
 const route = useRoute()
 
-// 当前用户（模拟登录态）
-const currentUser = '张三'
+// 获取当前用户ID - 增强容错处理
+const currentUserId = ref<number | null>(null)
 
-// 从localStorage加载订单数据
-const loadOrders = () => {
-  const savedOrders = localStorage.getItem('orders')
-  if (savedOrders) {
-    return JSON.parse(savedOrders)
-  } else {
-    // 如果没有保存的订单，使用模拟数据
-    const initialOrders = [
-      { 
-        id: 101, 
-        title: '帮买瑞幸咖啡+面包', 
-        address: '瑞幸(校门口)', 
-        price: 28.5, 
-        status: 0, 
-        createTime: '2025-11-08 11:30', 
-        publisherName: '王小二', 
-        hasRated: false,
-        acceptTime: null 
-      },
-      { 
-        id: 102, 
-        title: '取韵达快递', 
-        address: '快递柜', 
-        price: 10, 
-        status: 1, 
-        createTime: '2025-11-08 10:15', 
-        publisherName: '赵六', 
-        accepter: currentUser, 
-        hasRated: false,
-        acceptTime: new Date().toISOString() // 刚刚接单
-      },
-      { 
-        id: 103, 
-        title: '送文件到教务处', 
-        address: 'A座3楼', 
-        price: 15, 
-        status: 1, 
-        createTime: '2025-11-08 09:40', 
-        publisherName: currentUser, 
-        accepter: '李四', 
-        hasRated: false,
-        acceptTime: new Date(Date.now() - 4 * 60 * 1000).toISOString() // 4分钟前接单
-      },
-      { 
-        id: 104, 
-        title: '占座图书馆3楼', 
-        address: '图书馆', 
-        price: 25, 
-        status: 0, 
-        createTime: '2025-11-08 08:20', 
-        publisherName: '孙八', 
-        hasRated: false,
-        acceptTime: null 
-      },
-      { 
-        id: 105, 
-        title: '帮打饭', 
-        address: '二餐', 
-        price: 12, 
-        status: 2, 
-        createTime: '2025-11-08 12:00', 
-        publisherName: currentUser, 
-        accepter: '王五', 
-        hasRated: false,
-        acceptTime: new Date(Date.now() - 10 * 60 * 1000).toISOString() // 10分钟前接单
-      }
-    ]
-    localStorage.setItem('orders', JSON.stringify(initialOrders))
-    return initialOrders
+// 增强的用户ID初始化
+const initUserId = () => {
+  try {
+    const userIdStr = getUserId()
+    console.log('从localStorage获取的用户ID:', userIdStr)
+    
+    if (userIdStr) {
+      currentUserId.value = parseInt(userIdStr)
+      console.log('当前用户ID:', currentUserId.value)
+    } else {
+      console.warn('未获取到用户ID，用户可能未登录')
+      // 不设置currentUserId.value，保持为null
+    }
+  } catch (error) {
+    console.error('初始化用户ID失败:', error)
+    currentUserId.value = null
   }
 }
 
-// 所有订单数据
-const allOrders = ref<any[]>(loadOrders())
-
 // 状态映射
-const statusMap = ['待帮助', '进行中', '已完成']
+const statusMap: Record<string, string> = {
+  '0': '待帮助',
+  '1': '进行中', 
+  '2': '已完成',
+  '3': '已取消'
+}
 
 // 导航栏配置
 const tabs = ref([
@@ -194,27 +131,439 @@ const currentTab = ref<'all' | 'pending' | 'mine' | 'helping'>('all')
 const loading = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
+const allOrders = ref<any[]>([])
 
-// 将 onLoad 和相关函数移到 watch 之前
-const onLoad = () => {
-  // 重新加载订单数据
-  allOrders.value = loadOrders()
+// 从本地存储加载订单数据并转换格式
+const loadLocalOrders = () => {
+  const savedOrders = localStorage.getItem('orders')
+  if (savedOrders) {
+    try {
+      const localOrders = JSON.parse(savedOrders)
+      console.log('原始本地订单数据:', localOrders)
+      
+      // 转换本地数据格式 - 修复clientId为null的问题
+      const transformedOrders = localOrders.map((order: any) => {
+        // 确保clientId有合理值
+        let clientId = order.clientId
+        if (clientId === null || clientId === undefined) {
+          // 为null的clientId分配一个默认值，避免过滤时误判
+          clientId = 0 // 使用0表示未知用户
+        }
+        
+        const transformedOrder = {
+          id: order.id || order.orderId || Math.random().toString(36).substr(2, 9),
+          title: order.title || order.content || '无标题',
+          address: order.address || '未指定地址',
+          price: order.price || order.reward || 0,
+          status: typeof order.status === 'number' ? order.status.toString() : (order.status || '0'),
+          createTime: order.createTime || order.publishTime || new Date().toISOString(),
+          publisherName: order.publisherName || order.clientUsername || '未知用户',
+          accepter: order.accepter || order.helperUsername,
+          content: order.content || order.description,
+          phone: order.phone,
+          helpTime: order.helpTime,
+          hasRated: order.hasRated || order.evaluated || false,
+          acceptTime: order.acceptTime,
+          // 使用修正后的clientId
+          clientId: clientId,
+          helperId: order.helperId || null
+        }
+        
+        return transformedOrder
+      })
+      
+      console.log('转换后的本地订单数据:', transformedOrders)
+      return transformedOrders
+    } catch (e) {
+      console.error('解析本地订单数据失败:', e)
+      return []
+    }
+  }
+  return []
+}
+
+// 创建模拟订单数据（用于API失败时）
+const createMockOrders = () => {
+  // 初始化用户ID
+  initUserId()
   
-  setTimeout(() => {
+  // 创建一些固定用户ID的测试订单
+  const mockOrders = [
+    {
+      id: 101,
+      title: '帮买瑞幸咖啡+面包',
+      address: '瑞幸咖啡(校门口店)',
+      price: 28.5,
+      status: '0',
+      createTime: '2025-11-08T11:30:00',
+      publisherName: '王小二',
+      accepter: '',
+      content: '需要一杯拿铁和一个牛角包，送到图书馆3楼',
+      phone: '13800138000',
+      helpTime: '2025-11-08T12:30:00',
+      hasRated: false,
+      acceptTime: null,
+      clientId: 1001, // 固定测试用户ID
+      helperId: null
+    },
+    {
+      id: 102,
+      title: '取韵达快递',
+      address: '快递柜A区',
+      price: 10,
+      status: '1',
+      createTime: '2025-11-08T10:15:00',
+      publisherName: '赵六',
+      accepter: '李四',
+      content: '取一个小包裹，送到宿舍楼A栋',
+      phone: '13800138001',
+      helpTime: '2025-11-08T11:00:00',
+      hasRated: false,
+      acceptTime: '2025-11-08T10:20:00',
+      clientId: 1002,
+      helperId: 1003
+    },
+    {
+      id: 103,
+      title: '送文件到教务处',
+      address: '行政楼A座3楼',
+      price: 15,
+      status: '1',
+      createTime: '2025-11-08T09:40:00',
+      publisherName: '张三',
+      accepter: '王五',
+      content: '送一份申请表到教务处',
+      phone: '13800138002',
+      helpTime: '2025-11-08T10:30:00',
+      hasRated: false,
+      acceptTime: '2025-11-08T09:45:00',
+      clientId: 1004,
+      helperId: 1005
+    }
+  ]
+  
+  // 如果当前用户已登录，添加一些当前用户的订单
+  if (currentUserId.value) {
+    mockOrders.push(
+      {
+        id: 201,
+        title: '帮忙打印资料',
+        address: '图书馆打印室',
+        price: 8,
+        status: '0',
+        createTime: '2025-11-08T14:20:00',
+        publisherName: `用户${currentUserId.value}`,
+        accepter: '',
+        content: '打印10页资料，送到教学楼B座',
+        phone: '13800138003',
+        helpTime: '2025-11-08T15:00:00',
+        hasRated: false,
+        acceptTime: null,
+        clientId: currentUserId.value,
+        helperId: null
+      },
+      {
+        id: 202,
+        title: '代取外卖',
+        address: '校门口外卖点',
+        price: 12,
+        status: '1',
+        createTime: '2025-11-08T12:00:00',
+        publisherName: `用户${currentUserId.value}`,
+        accepter: '热心同学',
+        content: '取一份麻辣烫，送到宿舍3号楼',
+        phone: '13800138004',
+        helpTime: '2025-11-08T12:30:00',
+        hasRated: false,
+        acceptTime: '2025-11-08T12:05:00',
+        clientId: currentUserId.value,
+        helperId: 1006
+      }
+    )
+  }
+  
+  // 保存模拟数据到本地存储
+  localStorage.setItem('orders', JSON.stringify(mockOrders))
+  return mockOrders
+}
+
+// 转换后端订单数据为前端格式
+const transformOrderData = (apiOrder: any) => {
+  return {
+    id: apiOrder.orderId,
+    title: apiOrder.title || '无标题',
+    address: apiOrder.address || '未指定地址',
+    price: apiOrder.reward || 0,
+    status: apiOrder.status || '0',
+    createTime: apiOrder.publishTime,
+    publisherName: apiOrder.clientUsername || '未知用户',
+    accepter: apiOrder.helperUsername,
+    content: apiOrder.description,
+    phone: apiOrder.phone,
+    helpTime: apiOrder.helpTime,
+    hasRated: apiOrder.evaluated || false,
+    acceptTime: apiOrder.acceptTime,
+    clientId: apiOrder.clientId,
+    helperId: apiOrder.helperId
+  }
+}
+
+// 加载订单数据
+const loadOrders = async (silent = false) => {
+  console.log('开始加载订单数据...')
+  console.log('当前标签:', currentTab.value)
+  console.log('当前用户ID:', currentUserId.value)
+  
+  // 确保用户ID已初始化
+  if (!currentUserId.value) {
+    initUserId()
+  }
+  
+  // 先尝试从本地存储加载
+  let localOrders = loadLocalOrders()
+  
+  // 如果没有本地数据，创建模拟数据
+  if (localOrders.length === 0) {
+    console.log('无本地数据，创建模拟数据')
+    localOrders = createMockOrders()
+  }
+  
+  console.log('本地订单数据:', localOrders)
+  allOrders.value = localOrders
+  console.log('本地数据加载完成，数据量:', allOrders.value.length)
+  
+  // 更新显示订单和角标
+  updateDisplayOrders()
+  
+  // 如果不是静默模式，显示加载完成提示
+  if (!silent && localOrders.length > 0) {
+    Toast.clear()
+  }
+  
+  // 静默尝试API调用（不显示加载提示）
+  if (silent) {
+    console.log('静默尝试API调用...')
+    try {
+      // 检查认证状态
+      if (!isAuthenticated()) {
+        console.log('用户未认证，跳过API调用')
+        throw new Error('用户未认证')
+      }
+      
+      // 构建查询参数
+      const queryParams: any = {
+        page: 1,
+        size: 50
+      }
+      
+      // 根据当前标签设置类型
+      if (currentTab.value !== 'all') {
+        const typeMap: { [key: string]: string } = {
+          'pending': 'available',
+          'mine': 'published',
+          'helping': 'accepted'
+        }
+        queryParams.type = typeMap[currentTab.value] || currentTab.value
+      }
+      
+      const response = await orderAPI.getList(queryParams)
+      console.log('API响应:', response)
+      
+      if (response.code === 200 && response.data) {
+        // 转换后端数据格式为前端格式
+        const apiOrders = (response.data.orders || []).map(transformOrderData)
+        
+        if (apiOrders.length > 0) {
+          allOrders.value = apiOrders
+          // 保存到本地存储
+          localStorage.setItem('orders', JSON.stringify(apiOrders))
+          console.log('API数据加载成功，数据量:', allOrders.value.length)
+          updateDisplayOrders()
+        }
+      }
+    } catch (error) {
+      console.log('API调用失败，继续使用本地数据', error)
+      // API调用失败时继续使用本地数据，不显示错误
+    }
+  } else {
+    // 非静默模式显示加载提示
+    const toast = Toast.loading({
+      message: '加载中...',
+      forbidClick: true,
+      duration: 0
+    })
+    
+    try {
+      // 检查认证状态
+      if (!isAuthenticated()) {
+        Toast.clear()
+        console.log('用户未认证，使用本地数据')
+        return
+      }
+      
+      // 构建查询参数
+      const queryParams: any = {
+        page: 1,
+        size: 50
+      }
+      
+      if (currentTab.value !== 'all') {
+        const typeMap: { [key: string]: string } = {
+          'pending': 'available',
+          'mine': 'published', 
+          'helping': 'accepted'
+        }
+        queryParams.type = typeMap[currentTab.value] || currentTab.value
+      }
+      
+      const response = await orderAPI.getList(queryParams)
+      Toast.clear()
+      
+      if (response.code === 200 && response.data) {
+        const apiOrders = (response.data.orders || []).map(transformOrderData)
+        
+        if (apiOrders.length > 0) {
+          allOrders.value = apiOrders
+          localStorage.setItem('orders', JSON.stringify(apiOrders))
+          updateDisplayOrders()
+          Toast.success('加载成功')
+        } else {
+          Toast('暂无订单数据')
+        }
+      } else {
+        Toast(response.message || '加载失败')
+      }
+    } catch (error: any) {
+      Toast.clear()
+      console.error('加载订单失败:', error)
+      // 显示具体的错误信息
+      if (error.response && error.response.data) {
+        Toast(error.response.data.message || '网络错误')
+      } else {
+        Toast('网络错误，使用本地数据')
+      }
+    }
+  }
+}
+
+const onLoad = async () => {
+  try {
+    console.log('开始加载订单数据...')
+    console.log('当前标签:', currentTab.value)
+    
+    // 确保用户ID已初始化
+    initUserId()
+    
+    // 加载订单数据（静默模式）
+    await loadOrders(true)
+    
+  } catch (error) {
+    console.error('加载订单失败:', error)
+    // 确保无论如何都有数据
+    const localOrders = loadLocalOrders()
+    if (localOrders.length === 0) {
+      allOrders.value = createMockOrders()
+    } else {
+      allOrders.value = localOrders
+    }
+    updateDisplayOrders()
+  } finally {
     loading.value = false
     finished.value = true
     refreshing.value = false
-  }, 600)
+    console.log('订单加载完成，数据量:', allOrders.value.length)
+  }
 }
 
 const onRefresh = () => {
+  console.log('下拉刷新')
   refreshing.value = true
+  // 清除本地缓存，重新加载
+  localStorage.removeItem('orders')
   onLoad()
 }
 
-const formatTime = (t: string) => t.slice(5, 16).replace('-', '/')
+// 更新显示订单和角标数量 - 增强容错处理
+const updateDisplayOrders = () => {
+  // 更新角标
+  tabs.value.forEach(tab => {
+    if (tab.key === 'all') tab.count = allOrders.value.length
+    if (tab.key === 'pending') tab.count = allOrders.value.filter(o => o.status === '0').length
+    
+    // 关键修正：只有当用户ID有效时才计算"我发布的"和"我帮助的"
+    if (tab.key === 'mine') {
+      if (currentUserId.value) {
+        tab.count = allOrders.value.filter(o => {
+          const isMyOrder = o.clientId === currentUserId.value
+          return isMyOrder
+        }).length
+      } else {
+        tab.count = 0
+      }
+    }
+    
+    if (tab.key === 'helping') {
+      if (currentUserId.value) {
+        tab.count = allOrders.value.filter(o => {
+          const isHelping = o.helperId === currentUserId.value
+          return isHelping
+        }).length
+      } else {
+        tab.count = 0
+      }
+    }
+  })
+  
+  console.log('角标更新完成:', tabs.value.map(tab => `${tab.name}: ${tab.count}`))
+}
+
+// 计算当前显示的订单 - 增强容错处理
+const displayOrders = computed(() => {
+  let filtered = allOrders.value
+
+  if (currentTab.value === 'pending') {
+    filtered = filtered.filter(o => o.status === '0')
+  }
+  
+  if (currentTab.value === 'mine') {
+    if (currentUserId.value) {
+      filtered = filtered.filter(o => {
+        const isMyOrder = o.clientId === currentUserId.value
+        return isMyOrder
+      })
+    } else {
+      filtered = [] // 用户ID无效时显示空列表
+    }
+  }
+  
+  if (currentTab.value === 'helping') {
+    if (currentUserId.value) {
+      filtered = filtered.filter(o => {
+        const isHelping = o.helperId === currentUserId.value
+        return isHelping
+      })
+    } else {
+      filtered = [] // 用户ID无效时显示空列表
+    }
+  }
+
+  console.log('过滤后的订单数量:', filtered.length, '过滤条件:', currentTab.value)
+  return filtered
+})
+
+// 格式化时间显示
+const formatTime = (timeString: string) => {
+  if (!timeString) return ''
+  try {
+    const date = new Date(timeString)
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  } catch (e) {
+    return timeString
+  }
+}
 
 const switchTab = (key: any) => {
+  console.log('切换标签:', key)
   currentTab.value = key
   router.replace({ 
     query: { ...route.query, tab: key } 
@@ -225,6 +574,7 @@ const switchTab = (key: any) => {
 }
 
 const toDetail = (id: number) => {
+  console.log('查看订单详情:', id)
   router.push(`/order/detail/${id}`)
 }
 
@@ -235,121 +585,124 @@ const showOrderActions = (order: any) => {
 
 // 检查是否可以取消接单（接单后3分钟内）
 const canCancelAccept = (order: any) => {
-  if (order.status !== 1) return false // 只有进行中的订单
-  if (order.accepter !== currentUser) return false // 只有接单者可以取消
+  if (order.status !== '1') return false
+  if (!currentUserId.value || order.helperId !== currentUserId.value) return false
   
-  // 检查接单时间是否在3分钟内
   if (!order.acceptTime) return false
   
-  const acceptTime = new Date(order.acceptTime).getTime()
-  const currentTime = new Date().getTime()
-  const timeDiff = currentTime - acceptTime
-  const threeMinutes = 3 * 60 * 1000 // 3分钟
-  
-  return timeDiff <= threeMinutes
+  try {
+    const acceptTime = new Date(order.acceptTime).getTime()
+    const currentTime = new Date().getTime()
+    const timeDiff = currentTime - acceptTime
+    const threeMinutes = 3 * 60 * 1000
+    
+    return timeDiff <= threeMinutes
+  } catch (e) {
+    return false
+  }
 }
 
 // 检查是否可以删除订单（发布者删除未接单的订单）
 const canDeleteOrder = (order: any) => {
-  if (order.status !== 0) return false // 只有待帮助的订单
-  if (order.publisherName !== currentUser) return false // 只有发布者可以删除
+  if (order.status !== '0') return false
+  if (!currentUserId.value || order.clientId !== currentUserId.value) return false
   
   return true
 }
 
 // 处理取消接单
-const handleCancelAccept = (orderId: number) => {
+const handleCancelAccept = async (orderId: number) => {
   Dialog.confirm({
     title: '取消接单',
     message: '确定要取消接单吗？取消后订单将重新变为待帮助状态。'
-  }).then(() => {
-    // 更新订单状态
-    const savedOrders = localStorage.getItem('orders')
-    if (savedOrders) {
-      const orders = JSON.parse(savedOrders)
-      const orderIndex = orders.findIndex((o: any) => o.id === orderId)
+  }).then(async () => {
+    try {
+      // 先更新本地状态
+      const orderIndex = allOrders.value.findIndex((o: any) => o.id === orderId)
       if (orderIndex !== -1) {
-        orders[orderIndex] = {
-          ...orders[orderIndex],
-          status: 0, // 重置为待帮助
-          accepter: null, // 清除接单人
-          acceptTime: null // 清除接单时间
+        allOrders.value[orderIndex] = {
+          ...allOrders.value[orderIndex],
+          status: '0',
+          helperId: null,
+          accepter: null,
+          acceptTime: null
         }
-        localStorage.setItem('orders', JSON.stringify(orders))
-        allOrders.value = orders
-        
-        Toast.success('取消接单成功')
-        
-        // 重新加载数据
-        onLoad()
+        localStorage.setItem('orders', JSON.stringify(allOrders.value))
+        updateDisplayOrders()
       }
+      
+      // 尝试调用API
+      await orderAPI.cancelAccept(orderId.toString())
+      Toast.success('取消接单成功')
+    } catch (error) {
+      console.log('API取消接单失败，但本地状态已更新')
+      Toast.success('取消接单成功（本地）')
     }
+  }).catch(() => {
+    // 用户取消操作
   })
 }
 
 // 处理删除订单
-const handleDeleteOrder = (orderId: number) => {
+const handleDeleteOrder = async (orderId: number) => {
   Dialog.confirm({
     title: '删除订单',
     message: '确定要删除这个订单吗？删除后无法恢复。'
-  }).then(() => {
-    // 从订单列表中删除
-    const savedOrders = localStorage.getItem('orders')
-    if (savedOrders) {
-      const orders = JSON.parse(savedOrders)
-      const filteredOrders = orders.filter((o: any) => o.id !== orderId)
-      localStorage.setItem('orders', JSON.stringify(filteredOrders))
+  }).then(async () => {
+    try {
+      // 从本地订单列表中删除
+      const filteredOrders = allOrders.value.filter((o: any) => o.id !== orderId)
       allOrders.value = filteredOrders
+      localStorage.setItem('orders', JSON.stringify(filteredOrders))
+      updateDisplayOrders()
       
+      // 尝试调用API
+      await orderAPI.cancel(orderId.toString())
       Toast.success('订单删除成功')
-      
-      // 重新加载数据
-      onLoad()
+    } catch (error) {
+      console.log('API删除订单失败，但本地状态已更新')
+      Toast.success('订单删除成功（本地）')
     }
+  }).catch(() => {
+    // 用户取消操作
   })
 }
 
-// 现在 watch 可以安全地调用 onLoad
-watch(
-  () => route.query.tab,
-  (newTab) => {
-    if (newTab && ['all', 'pending', 'mine', 'helping'].includes(newTab as string)) {
-      currentTab.value = newTab as any
-      finished.value = false
-      loading.value = true
-      onLoad()
-    }
-  },
-  { immediate: true }
-)
-
-// 计算当前显示的订单 + 角标数量
-const displayOrders = computed(() => {
-  let filtered = allOrders.value
-
-  if (currentTab.value === 'pending') filtered = filtered.filter(o => o.status === 0)
-  if (currentTab.value === 'mine') filtered = filtered.filter(o => o.publisherName === currentUser)
-  if (currentTab.value === 'helping') filtered = filtered.filter(o => o.accepter === currentUser)
-
-  // 更新角标
-  tabs.value.forEach(tab => {
-    if (tab.key === 'all') tab.count = allOrders.value.length
-    if (tab.key === 'pending') tab.count = allOrders.value.filter(o => o.status === 0).length
-    if (tab.key === 'mine') tab.count = allOrders.value.filter(o => o.publisherName === currentUser).length
-    if (tab.key === 'helping') tab.count = allOrders.value.filter(o => o.accepter === currentUser).length
-  })
-
-  return filtered
-})
+// 初始化用户ID
+initUserId()
 
 onMounted(() => {
+  console.log('HelpView 组件挂载')
   if (route.query.tab && ['all', 'pending', 'mine', 'helping'].includes(route.query.tab as string)) {
     currentTab.value = route.query.tab as any
   }
   onLoad()
 })
+
+const handleBack = () => {
+  router.back()
+}
+
+const handlePublish = () => {
+  if (isAuthenticated()) {
+    router.push('/order/create')
+  } else {
+    router.push({ 
+      name: 'Login', 
+      query: { redirect: '/order/create' } 
+    })
+  }
+}
+
 const handleAuth = () => {
-  router.push('/profile')
+  if (isAuthenticated()) {
+    router.push('/profile')
+  } else {
+    router.push({ 
+      name: 'Login', 
+      query: { redirect: '/profile' } 
+    })
+  }
 }
 </script>
 

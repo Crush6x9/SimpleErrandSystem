@@ -10,8 +10,5 @@
         <module name="errand" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="errand" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>

@@ -11,23 +11,23 @@
         <div class="rating-options">
           <div 
             class="rating-option" 
-            :class="{ active: rating === 'good' }"
-            @click="selectRating('good')"
+            :class="{ active: review === '1' }"
+            @click="selectRating('1')"
           >
             <van-image width="100" src="/my-good.png" />
             <span>好评</span>
           </div>
           <div 
             class="rating-option" 
-            :class="{ active: rating === 'bad' }"
-            @click="selectRating('bad')"
+            :class="{ active: review === '0' }"
+            @click="selectRating('0')"
           >
             <van-image width="100" src="/my-bad.png" />
             <span>差评</span>
           </div>
         </div>
         
-        <div class="message" v-if="rating">
+        <div class="message" v-if="review">
           <p>感谢您的评价</p>
           <p>帮助他人分辨</p>
         </div>
@@ -36,8 +36,9 @@
           <van-button 
             type="primary" 
             size="large" 
-            :disabled="!rating" 
+            :disabled="!review" 
             @click="submitRating"
+            :loading="loading"
           >
             提交评价
           </van-button>
@@ -51,16 +52,28 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Toast } from 'vant'
+import { evaluationAPI } from '@/api'
+import { isAuthenticated } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
-const rating = ref('')
-const orderId = ref(0)
+const review = ref('')
+const orderId = ref('')
+const loading = ref(false)
 
 onMounted(() => {
+  if (!isAuthenticated()) {
+    Toast('请先登录')
+    router.push('/login')
+    return
+  }
+  
   // 获取订单ID
   if (route.query.orderId) {
-    orderId.value = parseInt(route.query.orderId as string)
+    orderId.value = route.query.orderId as string
+  } else {
+    Toast('订单ID不存在')
+    router.back()
   }
 })
 
@@ -69,62 +82,38 @@ const handleBack = () => {
 }
 
 const selectRating = (type: string) => {
-  rating.value = type
+  review.value = type
 }
 
-const submitRating = () => {
-  if (!rating.value) {
+const submitRating = async () => {
+  if (!review.value) {
     Toast('请选择评价')
     return
   }
-  
-  // 更新订单评价状态
-  updateOrderRating()
-  
-  Toast.success('评价提交成功')
-  
-  // 延迟跳转，让用户看到成功提示
-  setTimeout(() => {
-    router.push('/home')
-  }, 1500)
-}
 
-// 更新订单评价状态
-const updateOrderRating = () => {
-  const savedOrders = localStorage.getItem('orders')
-  if (savedOrders && orderId.value) {
-    const orders = JSON.parse(savedOrders)
-    const orderIndex = orders.findIndex((o: any) => o.id === orderId.value)
-    if (orderIndex !== -1) {
-      orders[orderIndex] = {
-        ...orders[orderIndex],
-        hasRated: true,
-        rating: rating.value // 保存评价类型
-      }
-      localStorage.setItem('orders', JSON.stringify(orders))
+  try {
+    loading.value = true
+    
+    // 调用评价API
+    const response = await evaluationAPI.evaluate(orderId.value, {
+      review: review.value
+    })
+    
+    if (response.code === 200) {
+      Toast.success('评价提交成功')
       
-      // 更新用户评价数据
-      updateUserRating(rating.value)
-    }
-  }
-}
-
-// 更新用户评价数据
-const updateUserRating = (ratingType: string) => {
-  // 获取当前用户数据
-  const userData = localStorage.getItem('userData')
-  if (userData) {
-    const user = JSON.parse(userData)
-    
-    // 更新评价数据
-    if (ratingType === 'good') {
-      user.好评 = (user.好评 || 0) + 1
+      // 延迟跳转，让用户看到成功提示
+      setTimeout(() => {
+        router.push('/home')
+      }, 1500)
     } else {
-      user.差评 = (user.差评 || 0) + 1
+      Toast(response.message || '评价提交失败')
     }
-    
-    // 保存更新后的用户数据
-    localStorage.setItem('userData', JSON.stringify(user))
+  } catch (error: any) {
+    console.error('评价提交失败:', error)
+    Toast('评价提交失败')
+  } finally {
+    loading.value = false
   }
 }
 </script>

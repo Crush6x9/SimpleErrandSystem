@@ -9,7 +9,6 @@
     <div class="form-container">
       <h1 class="title">设置新密码</h1>
       
-      <!-- 新密码输入 -->
       <van-cell-group inset>
         <van-field
           v-model="newPassword"
@@ -20,8 +19,7 @@
           @click-right-icon="togglePasswordVisibility"
         />
       </van-cell-group>
-      
-      <!-- 确认密码输入 -->
+
       <van-cell-group inset>
         <van-field
           v-model="confirmPassword"
@@ -32,8 +30,7 @@
           @click-right-icon="toggleConfirmVisibility"
         />
       </van-cell-group>
-      
-      <!-- 确认按钮 -->
+
       <div class="confirm-button">
         <van-button 
           type="primary" 
@@ -45,7 +42,6 @@
         </van-button>
       </div>
     </div>
-    <!-- 背景图 -->
     <div class="background">
       <van-image src="/password-bg.png" width="100%" fit="cover" alt="背景" />
     </div>
@@ -53,9 +49,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute, type LocationQueryValue } from 'vue-router'
 import { Toast } from 'vant'
+import { authAPI } from '@/api'
 
 // 处理返回
 const handleBack = () => {
@@ -69,20 +66,24 @@ const confirmPassword = ref('')
 const isPasswordVisible = ref(false)
 const isConfirmVisible = ref(false)
 
-// 安全获取手机号（处理所有可能情况）
-const getPhoneFromQuery = (query: LocationQueryValue | LocationQueryValue[]) => {
+// 安全获取查询参数
+const getQueryParam = (query: LocationQueryValue | LocationQueryValue[]) => {
   if (Array.isArray(query)) {
     return query[0] || ''
   }
   return query || ''
 }
 
-const phone = getPhoneFromQuery(route.query.phone)
+const phone = getQueryParam(route.query.phone)
 
-// 返回登录页
-const onClickLeft = () => {
-  router.push({ name: 'Login' })
-}
+// 组件挂载时检查必要参数
+onMounted(() => {
+  if (!phone) {
+    Toast('缺少手机号参数')
+    router.push({ name: 'ForgetPassword' })
+    return
+  }
+})
 
 // 切换密码可见性
 const togglePasswordVisibility = () => {
@@ -118,23 +119,37 @@ const handleSubmit = async () => {
   })
 
   try {
-    // 模拟API调用 - 实际使用时替换为axios请求
-    // POST /api/set-password { phone, newPassword }
-    console.log('调用设置密码API:', { phone, newPassword: newPassword.value })
-    
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    // 调用重置密码API
+    const response = await authAPI.resetPassword({
+      phone: phone,
+      newPassword: newPassword.value
+    })
     
     Toast.clear()
+    
+    if (response.code !== 200) {
+      Toast(response.message || '密码修改失败')
+      return
+    }
+    
     Toast('密码修改成功')
     
     // 跳转回登录页
     router.push({ name: 'Login' })
-  } catch (error) {
+  } catch (error: any) {
     Toast.clear()
-    Toast('修改失败，请重试')
+    // 显示具体的错误信息
+    if (error.response && error.response.data) {
+      Toast(error.response.data.message || '密码修改失败')
+    } else if (error.message) {
+      Toast(error.message)
+    } else {
+      Toast('网络错误，请稍后重试')
+    }
   }
 }
 </script>
+
 
 <style scoped>
 .set-password-container {
