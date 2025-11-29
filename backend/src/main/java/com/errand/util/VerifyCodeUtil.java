@@ -71,9 +71,14 @@ public class VerifyCodeUtil {
             return Result.error("验证码错误");
         }
 
-        // 验证成功后移除验证码
-        codeStorage.remove(phone);
         return Result.success("验证码验证成功");
+    }
+
+    /**
+     * 移除验证码
+     */
+    public void removeCode(String phone) {
+        codeStorage.remove(phone);
     }
 
     /**
