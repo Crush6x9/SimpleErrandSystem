@@ -16,7 +16,7 @@ public class JwtResponse {
     @ApiModelProperty(value = "令牌类型", example = "Bearer")
     private String tokenType = "Bearer";
 
-    @ApiModelProperty(value = "过期时间（毫秒）", example = "86400000")
+    @ApiModelProperty(value = "过期时间（毫秒）", example = "1800000")
     private Long expiresIn;
 
     @ApiModelProperty(value = "用户信息")
