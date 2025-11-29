@@ -11,7 +11,7 @@
  Target Server Version : 80036 (8.0.36)
  File Encoding         : 65001
 
- Date: 28/11/2025 22:17:23
+ Date: 29/11/2025 22:08:40
 */
 
 SET NAMES utf8mb4;
@@ -27,7 +27,7 @@ CREATE TABLE `evaluation`  (
   `review` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '评价（0 差评，1 好评）',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`evaluation_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of evaluation
@@ -53,7 +53,7 @@ CREATE TABLE `order`  (
   `accept_time` datetime NULL DEFAULT NULL COMMENT '接单时间',
   `complete_time` datetime NULL DEFAULT NULL COMMENT '完成时间',
   PRIMARY KEY (`order_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of order
@@ -71,7 +71,7 @@ CREATE TABLE `user`  (
   `user_id` int NOT NULL AUTO_INCREMENT COMMENT '用户编号',
   `phone` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '手机号',
   `username` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户名',
-  `password` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户密码',
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '用户密码',
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像（路径）',
   `student_id` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '学号',
   `certificate` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '证件（路径）',
@@ -80,14 +80,14 @@ CREATE TABLE `user`  (
   `update_time` datetime NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`user_id`) USING BTREE,
   UNIQUE INDEX `uniq_phone`(`phone` ASC) USING BTREE COMMENT '手机号不可重复'
-) ENGINE = InnoDB AUTO_INCREMENT = 104 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 107 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (101, '13804969358', '用户101', '123456', 'avatar/A-Default.png', NULL, NULL, '0', '2025-11-28 21:36:25', '2025-11-28 21:46:12');
-INSERT INTO `user` VALUES (102, '13812345678', '用户102', '123456', 'avatar/A-Default.png', NULL, NULL, '0', '2025-11-28 21:37:25', '2025-11-28 21:46:07');
-INSERT INTO `user` VALUES (103, '13012345678', '用户103', '123456', 'avatar/A-Default.png', '202427337001', 'certificate/C103.png', '1', '2025-11-28 21:38:43', '2025-11-28 21:46:02');
+INSERT INTO `user` VALUES (101, '13810293847', '用户101', '$2a$10$7JADxPwz8ZLTup6sUEZY0.kZucvRaediyLEPcLiLVZJKSCFGeaCDa', 'avatar/A-Default.png', NULL, NULL, '0', '2025-11-29 21:02:49', '2025-11-29 22:00:30');
+INSERT INTO `user` VALUES (102, '13012345678', '用户102', '$2a$10$NIkmfMrb.fFD3glJyotD9eKHKIjXducWsjXm4HRl6a37AmA00DjmW', 'avatar/A-Default.png', NULL, NULL, '0', '2025-11-29 21:59:19', '2025-11-29 22:00:34');
+INSERT INTO `user` VALUES (103, '13812345678', '用户103', '$2a$10$SGMLGu59qXfjBHWQgxolr.5zbPWhQ6X8hEkCx4Lh0eKKJCitYLuve', 'avatar/A-Default.png', '202427337001', 'certificate/C103.png', '1', '2025-11-29 21:59:44', '2025-11-29 22:04:16');
 
 -- ----------------------------
 -- Table structure for wallet
@@ -101,7 +101,7 @@ CREATE TABLE `wallet`  (
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`wallet_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '钱包表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '钱包表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of wallet
@@ -118,8 +118,9 @@ CREATE TABLE `withdrawal`  (
   `amount` decimal(6, 2) NULL DEFAULT NULL COMMENT '提现金额',
   `status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提现状态',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`withdrawal_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '提现表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '提现表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of withdrawal
