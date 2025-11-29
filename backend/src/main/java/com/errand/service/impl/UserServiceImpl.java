@@ -79,6 +79,10 @@ public class UserServiceImpl implements UserService {
                 // 如果更新失败，记录日志但依然返回注册成功
                 System.err.println("注册成功但默认信息设置失败！用户ID: " + userId);
             }
+
+            // 注册成功后移除验证码
+            verifyCodeUtil.removeCode(request.getPhone());
+
             return Result.success("注册成功");
         } else {
             return Result.error("注册失败");
