@@ -15,4 +15,12 @@ public class OrderQueryRequest {
 
     @ApiModelProperty(value = "每页大小")
     private Integer size = 10;
+
+    public OrderQueryRequest() {}
+
+    public OrderQueryRequest(String type, Integer page, Integer size) {
+        this.type = type;
+        this.page = page;
+        this.size = size;
+    }
 }

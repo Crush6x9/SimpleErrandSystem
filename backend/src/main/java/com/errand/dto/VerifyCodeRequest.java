@@ -15,4 +15,11 @@ public class VerifyCodeRequest {
     @ApiModelProperty(value = "验证码", required = true, example = "123456")
     @NotBlank(message = "验证码不能为空")
     private String code;
+
+    public VerifyCodeRequest() {}
+
+    public VerifyCodeRequest(String phone, String code) {
+        this.phone = phone;
+        this.code = code;
+    }
 }

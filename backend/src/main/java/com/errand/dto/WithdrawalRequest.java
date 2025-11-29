@@ -12,4 +12,10 @@ public class WithdrawalRequest {
     @NotNull(message = "提现金额不能为空")
     @ApiModelProperty(value = "提现金额", required = true)
     private BigDecimal amount;
+
+    public WithdrawalRequest() {}
+
+    public WithdrawalRequest(BigDecimal amount) {
+        this.amount = amount;
+    }
 }

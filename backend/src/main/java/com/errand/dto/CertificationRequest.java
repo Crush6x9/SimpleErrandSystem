@@ -21,4 +21,10 @@ public class CertificationRequest {
     private MultipartFile avatar;
 
     public CertificationRequest() {}
+
+    public CertificationRequest(String studentId, MultipartFile idCardImage, MultipartFile avatar) {
+        this.studentId = studentId;
+        this.idCardImage = idCardImage;
+        this.avatar = avatar;
+    }
 }

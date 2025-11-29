@@ -11,4 +11,10 @@ public class GenerateCodeRequest {
     @ApiModelProperty(value = "手机号", required = true, example = "13812345678")
     @NotBlank(message = "手机号不能为空")
     private String phone;
+
+    public GenerateCodeRequest() {}
+
+    public GenerateCodeRequest(String phone) {
+        this.phone = phone;
+    }
 }

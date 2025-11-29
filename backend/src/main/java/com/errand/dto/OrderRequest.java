@@ -34,4 +34,15 @@ public class OrderRequest {
     @NotNull(message = "悬赏金额不能为空")
     @ApiModelProperty(value = "悬赏金额", required = true)
     private BigDecimal reward;
+
+    public OrderRequest() {}
+
+    public OrderRequest(String title, String address, String description, LocalDateTime helpTime, String phone, BigDecimal reward) {
+        this.title = title;
+        this.address = address;
+        this.description = description;
+        this.helpTime = helpTime;
+        this.phone = phone;
+        this.reward = reward;
+    }
 }

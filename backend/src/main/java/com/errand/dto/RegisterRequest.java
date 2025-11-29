@@ -25,6 +25,8 @@ public class RegisterRequest {
     @Size(min = 6, max = 6, message = "验证码必须为6位")
     private String verifyCode;
 
+    public RegisterRequest() {}
+
     public RegisterRequest(String phone, String password, String verifyCode) {
         this.phone = phone;
         this.password = password;

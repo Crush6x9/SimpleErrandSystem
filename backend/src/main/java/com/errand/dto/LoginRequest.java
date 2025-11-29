@@ -12,9 +12,11 @@ public class LoginRequest {
     @NotBlank(message = "手机号不能为空")
     private String phone;
 
-    @ApiModelProperty(value = "密码", required = true, example = "password123")
+    @ApiModelProperty(value = "密码", required = true, example = "123456")
     @NotBlank(message = "密码不能为空")
     private String password;
+
+    public LoginRequest() {}
 
     public LoginRequest(String phone, String password) {
         this.phone = phone;
