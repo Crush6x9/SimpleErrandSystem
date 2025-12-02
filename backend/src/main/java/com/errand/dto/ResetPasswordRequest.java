@@ -21,10 +21,16 @@ public class ResetPasswordRequest {
     @Size(min = 6, max = 20, message = "密码长度6-20位")
     private String newPassword;
 
+    @ApiModelProperty(value = "验证码", required = true)
+    @NotBlank(message = "验证码不能为空")
+    @Size(min = 6, max = 6, message = "验证码必须为6位")
+    private String verifyCode;
+
     public ResetPasswordRequest() {}
 
-    public ResetPasswordRequest(String phone, String newPassword) {
+    public ResetPasswordRequest(String phone, String newPassword, String verifyCode) {
         this.phone = phone;
         this.newPassword = newPassword;
+        this.verifyCode = verifyCode;
     }
 }

@@ -41,86 +41,94 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Result register(RegisterRequest request) {
-        Result verifyResult = verifyCodeUtil.verifyCode(request.getPhone(), request.getVerifyCode());
-        if (!verifyResult.getCode().equals(200)) {
-            return verifyResult;
-        }
-
-        User existingUser = userMapper.findByPhone(request.getPhone());
-        if (existingUser != null) {
-            return Result.error("手机号已注册");
-        }
-
-        User user = new User();
-        user.setPhone(request.getPhone());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole("0"); // 默认角色为委托人
-        user.setCreateTime(LocalDateTime.now());
-        user.setUpdateTime(LocalDateTime.now());
-
-        int result = userMapper.insert(user);
-        if (result > 0) {
-            // 获取生成的用户ID
-            Long userId = user.getUserId();
-
-            // 设置默认用户名
-            String defaultUsername = "用户" + userId;
-            user.setUsername(defaultUsername);
-
-            // 设置默认头像路径
-            String defaultAvatarPath = "avatar/A-Default.png";
-            user.setAvatar(defaultAvatarPath);
-
-            // 更新用户信息（包含默认用户名和头像）
-            user.setUpdateTime(LocalDateTime.now());
-            int updateResult = userMapper.update(user);
-
-            if (updateResult == 0) {
-                // 如果更新失败，记录日志但依然返回注册成功
-                System.err.println("注册成功但默认信息设置失败！用户ID: " + userId);
+        try {
+            Result verifyResult = verifyCodeUtil.verifyCode(request.getPhone(), request.getVerifyCode());
+            if (!verifyResult.getCode().equals(200)) {
+                return verifyResult;
             }
 
-            // 注册成功后移除验证码
-            verifyCodeUtil.removeCode(request.getPhone());
+            User existingUser = userMapper.findByPhone(request.getPhone());
+            if (existingUser != null) {
+                return Result.error("手机号已注册");
+            }
 
-            return Result.success("注册成功");
-        } else {
-            return Result.error("注册失败");
+            User user = new User();
+            user.setPhone(request.getPhone());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setRole("0"); // 默认角色为委托人
+            user.setCreateTime(LocalDateTime.now());
+            user.setUpdateTime(LocalDateTime.now());
+
+            int result = userMapper.insert(user);
+            if (result > 0) {
+                // 获取生成的用户ID
+                Long userId = user.getUserId();
+
+                // 设置默认用户名
+                String defaultUsername = "用户" + userId;
+                user.setUsername(defaultUsername);
+
+                // 设置默认头像路径
+                String defaultAvatarPath = "avatar/A-Default.png";
+                user.setAvatar(defaultAvatarPath);
+
+                // 更新用户信息（包含默认用户名和头像）
+                user.setUpdateTime(LocalDateTime.now());
+                int updateResult = userMapper.update(user);
+
+                if (updateResult == 0) {
+                    // 如果更新失败，记录日志但依然返回注册成功
+                    System.err.println("注册成功但默认信息设置失败！用户ID: " + userId);
+                }
+
+                // 注册成功后移除验证码
+                verifyCodeUtil.removeCode(request.getPhone());
+
+                return Result.success("注册成功");
+            } else {
+                return Result.error("注册失败");
+            }
+        } catch (Exception e) {
+            return Result.error("系统错误，请稍后重试");
         }
     }
 
     @Override
     public Result login(LoginRequest request) {
-        // 根据手机号查询用户
-        User user = userMapper.findByPhone(request.getPhone());
-        if (user == null) {
-            return Result.error("用户不存在");
+        try {
+            // 根据手机号查询用户
+            User user = userMapper.findByPhone(request.getPhone());
+            if (user == null) {
+                return Result.error("用户不存在");
+            }
+
+            // 验证密码
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                return Result.error("密码错误");
+            }
+
+            // 生成访问令牌和刷新令牌
+            String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getUserId(), user.getRole());
+
+            // 构建用户信息
+            UserInfo userInfo = new UserInfo();
+            BeanUtils.copyProperties(user, userInfo);
+            userInfo.setId(user.getUserId());
+            userInfo.setVerified("1".equals(user.getRole()));
+
+            // 构建JWT响应
+            JwtResponse jwtResponse = new JwtResponse(
+                    accessToken,
+                    refreshToken,
+                    jwtUtil.getExpiration(),
+                    userInfo
+            );
+
+            return Result.success("登录成功", jwtResponse);
+        } catch (Exception e) {
+            return Result.error("系统错误，请稍后重试");
         }
-
-        // 验证密码
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return Result.error("密码错误");
-        }
-
-        // 生成访问令牌和刷新令牌
-        String accessToken = jwtUtil.generateToken(user.getUserId(), user.getRole());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUserId(), user.getRole());
-
-        // 构建用户信息
-        UserInfo userInfo = new UserInfo();
-        BeanUtils.copyProperties(user, userInfo);
-        userInfo.setId(user.getUserId());
-        userInfo.setVerified("1".equals(user.getRole()));
-
-        // 构建JWT响应
-        JwtResponse jwtResponse = new JwtResponse(
-                accessToken,
-                refreshToken,
-                jwtUtil.getExpiration(),
-                userInfo
-        );
-
-        return Result.success("登录成功", jwtResponse);
     }
 
     @Override
@@ -149,6 +157,12 @@ public class UserServiceImpl implements UserService {
                 return Result.error("用户不存在");
             }
 
+            // 验证验证码
+            Result verifyResult = verifyCodeUtil.verifyCode(request.getPhone(), request.getVerifyCode());
+            if (!verifyResult.getCode().equals(200)) {
+                return verifyResult;
+            }
+
             // 加密新密码
             String encodedPassword = passwordEncoder.encode(request.getNewPassword());
 
@@ -160,6 +174,9 @@ public class UserServiceImpl implements UserService {
             );
 
             if (result > 0) {
+                // 更新密码成功后移除验证码
+                verifyCodeUtil.removeCode(request.getPhone());
+
                 return Result.success("密码重置成功");
             } else {
                 return Result.error("密码重置失败");
@@ -271,12 +288,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserInfo getUserInfo(Long userId) {
+    public Result getUserInfo(Long userId) {
         User user = userMapper.findById(userId);
         if (user != null) {
-            return convertToUserInfo(user);
+            UserInfo userInfo = convertToUserInfo(user);
+            return Result.success("获取用户信息成功", userInfo);
+        } else {
+            return Result.error("用户不存在");
         }
-        return null;
     }
 
     @Override
@@ -373,8 +392,7 @@ public class UserServiceImpl implements UserService {
 
             int result = userMapper.update(user);
             if (result > 0) {
-                UserInfo userInfo = convertToUserInfo(user);
-                return Result.success("头像上传成功", userInfo);
+                return Result.success("头像上传成功", avatarPath);
             } else {
                 return Result.error("头像更新失败");
             }
