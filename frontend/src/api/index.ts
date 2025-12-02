@@ -1,13 +1,12 @@
 import axios from 'axios';
 import { Toast } from 'vant';
 
-// 创建axios实例
 const api = axios.create({
   baseURL: '/api',
   timeout: 10000,
 });
 
-// 请求拦截器 - 添加token
+// 请求拦截器,添加token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -21,23 +20,17 @@ api.interceptors.request.use(
   }
 );
 
-// 响应拦截器 - 处理错误
-// 响应拦截器 - 处理错误
+// 响应拦截器,处理错误
 api.interceptors.response.use(
   (response) => {
     console.log('API响应成功:', {
       url: response.config.url,
       method: response.config.method,
       data: response.data
-    })
-    
-    // 假设后端返回格式为 { code: number, message: string, data: any }
-    if (response.data && response.data.code !== 200 && response.data.code !== 0) {
-      const errorMsg = response.data.message || '请求失败'
-      Toast(errorMsg)
-      return Promise.reject(new Error(errorMsg))
-    }
-    return response.data
+    });
+
+    // 直接返回整个响应数据
+    return response.data;
   },
   (error) => {
     console.error('API请求错误详情:', {
@@ -47,94 +40,102 @@ api.interceptors.response.use(
       statusText: error.response?.statusText,
       data: error.response?.data,
       message: error.message
-    })
-    
+    });
+
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          Toast('登录已过期，请重新登录')
-          localStorage.removeItem('authToken')
-          localStorage.removeItem('userId')
-          localStorage.removeItem('userPhone')
-          window.location.href = '/login'
-          break
+          Toast('登录已过期，请重新登录');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('userPhone');
+          localStorage.removeItem('userInfo');
+          window.location.href = '/login';
+          break;
         case 403:
-          Toast('没有权限访问')
-          break
+          Toast('没有权限访问');
+          break;
         case 404:
-          Toast('请求的资源不存在')
-          break
+          Toast('请求的资源不存在');
+          break;
         case 500:
-          Toast('服务器错误，请稍后重试')
-          break
+          Toast('服务器错误，请稍后重试');
+          break;
         default:
-          Toast(`网络错误: ${error.response.status}`)
+          Toast(`网络错误: ${error.response.status}`);
       }
     } else if (error.request) {
-      console.error('没有收到响应:', error.request)
-      Toast('网络连接失败，请检查网络连接')
+      console.error('没有收到响应:', error.request);
+      Toast('网络连接失败，请检查网络连接');
     } else {
-      Toast('请求配置错误')
+      Toast('请求配置错误');
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);
 
 // 认证相关接口
 export const authAPI = {
-  // 注册
-  register: (data: { phone: string; password: string; code: string }) =>
+  register: (data: { phone: string; password: string; verifyCode: string }) =>
     api.post('/auth/register', data),
-  
-  // 登录
+
   login: (data: { phone: string; password: string }) =>
     api.post('/auth/login', data),
-  
-  // 验证手机号是否存在
-  checkPhone: (phone: string) =>
-    api.post('/auth/forget-password/check', { phone }),
-  
-  // 重置密码
-  resetPassword: (data: { phone: string; newPassword: string; code: string }) =>
+
+  checkPhone: (data: { phone: string }) =>
+    api.post('/auth/forget-password/check', data),
+
+  resetPassword: (data: { phone: string; newPassword: string; verifyCode: string }) =>
     api.post('/auth/forget-password/reset', data),
-  
-  // 发送验证码
-  sendCode: (data: { phone: string; type: string }) =>
+
+  sendCode: (data: { phone: string }) =>
     api.post('/auth/send-code', data),
-  
-  // 验证验证码
-  verifyCode: (data: { phone: string; code: string; type: string }) =>
+
+  verifyCode: (data: { phone: string; code: string }) =>
     api.post('/auth/verify-code', data),
 };
 
 // 用户相关接口
 export const userAPI = {
-  // 获取用户信息
-  getUserInfo: (userId: string) =>
-    api.get(`/user/${userId}/info`),
-  
-  // 更新用户信息
-  updateUserInfo: (userId: string, data: any) =>
-    api.put(`/user/${userId}/profile`, data),
-  
-  // 修改用户名
-  updateUsername: (userId: string, username: string) =>
-    api.put(`/user/${userId}/username`, { username }),
-  
-  // 用户认证
-  certification: (userId: string, data: any) =>
-    api.post(`/user/${userId}/certification`, data),
-  
+  updateUsername: (data: { username: string }, token: string) =>
+    api.put('/user/username', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  // 用户认证成为跑腿员
+  certification: (data: FormData, token: string) =>
+    api.post('/user/certification', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    }),
+
+  getUserInfo: (token: string) =>
+    api.get('/user/info', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  updateUserInfo: (data: FormData, token: string) =>
+    api.put('/user/profile', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    }),
+
   // 上传头像
-  uploadAvatar: (userId: string, formData: FormData) =>
-    api.post(`/user/${userId}/avatar`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+  uploadAvatar: (data: FormData, token: string) =>
+    api.post('/user/avatar', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
     }),
 };
 
 // 订单相关接口
 export const orderAPI = {
-  // 发布订单
   publish: (data: {
     title: string;
     address: string;
@@ -142,86 +143,103 @@ export const orderAPI = {
     helpTime: string;
     phone: string;
     reward: number;
-  }) => api.post('/orders/publish', data),
-  
-  // 接取订单
-  accept: (orderId: string) =>
-    api.put(`/orders/${orderId}/accept`),
-  
-  // 取消接单
-  cancelAccept: (orderId: string) =>
-    api.put(`/orders/${orderId}/cancel-accept`),
-  
-  // 完成订单
-  complete: (orderId: string) =>
-    api.put(`/orders/${orderId}/complete`),
-  
-  // 取消订单
-  cancel: (orderId: string) =>
-    api.delete(`/orders/${orderId}/cancel`),
-  
-  // 查询订单列表 - 修正为 GET 请求并传递参数
+  }, token: string) => api.post('/orders/publish', data, {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+
+  accept: (orderId: string, token: string) =>
+    api.put(`/orders/${orderId}/accept`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  cancelAccept: (orderId: string, token: string) =>
+    api.put(`/orders/${orderId}/cancel-accept`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  complete: (orderId: string, token: string) =>
+    api.put(`/orders/${orderId}/complete`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  cancel: (orderId: string, token: string) =>
+    api.delete(`/orders/${orderId}/cancel`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  // 查询订单列表
   getList: (params: {
     type?: string;
     page?: number;
     size?: number;
-  }) => {
-    // 将 type 转换为后端需要的格式
-    const queryParams: any = {
-      page: params.page || 1,
-      size: params.size || 10
-    };
-    
-    // 如果有类型参数，添加到查询参数中
-    if (params.type && params.type !== 'all') {
-      queryParams.type = params.type;
-    }
-    
-    return api.get('/orders/list', { params: queryParams });
+  }, token: string) => {
+    return api.get('/orders/list', {
+      params: {
+        ...params,
+        page: params.page || 1,
+        size: params.size || 10
+      },
+      headers: { Authorization: `Bearer ${token}` }
+    });
   },
-  
-  // 获取订单详情
-  getDetail: (orderId: string) =>
-    api.get(`/orders/${orderId}`),
-  
+
+  getDetail: (orderId: string, token: string) =>
+    api.get(`/orders/${orderId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
   // 获取订单统计
-  getStats: () =>
-    api.get('/orders/stats'),
+  getStats: (token: string) =>
+    api.get('/orders/stats', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
 };
 
 // 钱包相关接口
 export const walletAPI = {
   // 获取钱包信息
-  getWallet: () =>
-    api.get('/wallet/list'),
-  
-  // 提现
-  withdraw: (data: { amount: number }) =>
-    api.post('/wallet/withdraw', data),
-  
-  // 获取提现记录
-  getWithdrawals: () =>
-    api.get('/wallet/withdrawals'),
-  
-  // 获取账单明细
-  getBills: (params: { page?: number; size?: number }) =>
-    api.get('/wallet/bills', { params }),
-};
+  getWallet: (token: string) =>
+    api.get('/wallet/list', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
 
+  // 提现
+  withdraw: (data: { amount: number }, token: string) =>
+    api.post('/wallet/withdraw', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  // 获取提现记录
+  getWithdrawals: (token: string) =>
+    api.get('/wallet/withdrawals', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  // 获取账单明细
+  getBills: (params: { page?: number; size?: number; type?: string }, token: string) =>
+    api.get('/wallet/bills', {
+      params,
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+};
 
 // 评价相关接口
 export const evaluationAPI = {
-  // 订单评价
-  evaluate: (orderId: string, data: { review: string }) =>
-    api.post(`/evaluations/${orderId}`, data),
-  
-  // 获取订单评价
-  getEvaluation: (orderId: string) =>
-    api.get(`/evaluations/${orderId}`),
-  
+  evaluate: (orderId: string, data: { review: string }, token: string) =>
+    api.post(`/evaluations/${orderId}/evaluate`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  getEvaluation: (orderId: string, token: string) =>
+    api.get(`/evaluations/${orderId}/detail`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
   // 获取评价统计
-  getStats: (userId: string) =>
-    api.get(`/evaluations/${userId}/stats`),
+  getStats: (token: string) =>
+    api.get('/evaluations/stats', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
 };
 
 export default api;

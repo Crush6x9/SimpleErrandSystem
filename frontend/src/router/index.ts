@@ -1,5 +1,6 @@
 // src/router/index.ts 
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
+import { isAuthenticated } from '@/utils/auth';
 
 const routes = [
   {
@@ -16,35 +17,36 @@ const routes = [
     name: 'Home',
     component: () => import('../views/HomeView.vue')
   },
-
   {
     path: '/my',
     name: 'my',
-    component: () => import('../views/MyView.vue'),  
+    component: () => import('../views/MyView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../views/LoginView.vue')
+    component: () => import('../views/LoginView.vue'),
+    meta: { requiresGuest: true }
   },
   {
     path: '/forget-password',
     name: 'ForgetPassword',
-    component: () => import('../views/ForgetPasswordView.vue')
+    component: () => import('../views/ForgetPasswordView.vue'),
+    meta: { requiresGuest: true }
   },
   {
     path: '/set-new-password',
     name: 'SetNewPassword',
     component: () => import('../views/SetNewPasswordView.vue'),
-    props: (route: { query: { phone: any } }) => ({ phone: route.query.phone })
+    meta: { requiresGuest: true }
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('../views/RegisterView.vue')
+    component: () => import('../views/RegisterView.vue'),
+    meta: { requiresGuest: true }
   },
-
   {
     path: '/order/create',
     name: 'OrderCreate',
@@ -62,35 +64,60 @@ const routes = [
     path: '/order/detail/:id',
     name: 'OrderDetail',
     component: () => import('@/views/OrderDetail.vue'),
-    props: true
+    props: true,
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('../views/ProfileView.vue')
+    component: () => import('../views/ProfileView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/wallet',
     name: 'Wallet',
-    component: () => import('../views/WalletView.vue')
+    component: () => import('../views/WalletView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/order-complete',
     name: 'OrderComplete',
     component: () => import('../views/OrderComplete.vue'),
-    props: true
+    props: true,
+    meta: { requiresAuth: true }
   },
   {
     path: '/order-rate',
     name: 'OrderRate',
     component: () => import('../views/OrderRate.vue'),
-    props: true
+    props: true,
+    meta: { requiresAuth: true }
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
-})
+});
 
-export default router
+// 导航守卫
+router.beforeEach((to, from, next) => {
+  const isLoggedIn = isAuthenticated();
+
+  // 检查是否需要认证
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    next({
+      name: 'Login',
+      query: { redirect: to.fullPath }
+    });
+  }
+  // 检查是否已登录的用户不能访问登录/注册页面
+  else if (to.meta.requiresGuest && isLoggedIn) {
+    next({ name: 'Home' });
+  }
+  else {
+    next();
+  }
+});
+
+export default router;

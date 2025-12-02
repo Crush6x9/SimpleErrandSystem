@@ -1,65 +1,38 @@
 <template>
   <div class="forget-container">
-   <van-nav-bar 
-      title="忘记密码" 
-      left-text="返回" 
-      left-arrow 
-      @click-left="handleBack" 
-    />
-    
+    <van-nav-bar title="忘记密码" left-text="返回" left-arrow @click-left="handleBack" />
+
     <div class="form-container">
       <h1 class="title">忘记密码</h1>
-      
+
       <van-cell-group inset>
-        <van-field
-          v-model="phone"
-          type="tel"
-          label="手机号"
-          placeholder="请输入注册手机号"
-          :rules="[{ required: true, message: '请填写手机号' }]"
-        />
+        <van-field v-model="phone" type="tel" label="手机号" placeholder="请输入注册手机号"
+          :rules="[{ required: true, message: '请填写手机号' }]" />
       </van-cell-group>
 
       <div class="verify-button">
-        <van-button 
-          type="primary" 
-          size="large" 
-          :disabled="!/^1[3-9]\d{9}$/.test(phone) || countdown > 0"
-          @click="sendVerificationCode"
-        >
+        <van-button type="primary" size="large" :disabled="!/^1[3-9]\d{9}$/.test(phone) || countdown > 0"
+          @click="sendVerificationCode">
           {{ countdown > 0 ? `${countdown}秒后重发` : '获取验证码' }}
         </van-button>
       </div>
     </div>
-    
-    <van-dialog
-      v-model:show="showVerificationDialogVisible"
-      title="输入验证码"
-      :show-confirm-button="false"
-      :close-on-click-overlay="false"
-      class="verification-dialog"
-    >
+
+    <van-dialog v-model:show="showVerificationDialogVisible" title="输入验证码" :show-confirm-button="false"
+      :close-on-click-overlay="false" class="verification-dialog">
       <div class="verification-content">
         <p class="verification-desc">已向手机号 {{ phone }} 发送验证码</p>
-        
+
         <div class="code-input-container">
-          <input 
-            v-for="(code, index) in verificationCodeArray" 
-            :key="index"
-            type="tel"
-            maxlength="1"
-            class="code-input"
-            @input="handleCodeInput(index, $event)"
-            @keydown="handleCodeKeyDown(index, $event)"
-            ref="codeInputs"
-          >
+          <input v-for="(code, index) in verificationCodeArray" :key="index" type="tel" maxlength="1" class="code-input"
+            @input="handleCodeInput(index, $event)" @keydown="handleCodeKeyDown(index, $event)" ref="codeInputs">
         </div>
-        
+
         <p class="resend-timer" v-if="resendEnabled">
           {{ resendCountdown > 0 ? `重新发送(${resendCountdown}s)` : '未收到验证码？' }}
           <span v-if="!resendCountdown" class="resend-link" @click="resendVerificationCode">重新发送</span>
         </p>
-        
+
         <van-button type="primary" size="large" @click="verifyCode" class="verify-button">
           验证
         </van-button>
@@ -72,276 +45,250 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Toast } from 'vant'
-import { authAPI } from '@/api'
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { Toast } from 'vant';
+import { authAPI } from '@/api';
 
-// 处理返回
 const handleBack = () => {
-  router.back()
+  router.back();
 }
 
-const router = useRouter()
-const phone = ref('')
-const countdown = ref(0)
+const router = useRouter();
+const phone = ref('');
+const countdown = ref(0);
 
-// 验证码相关
-const showVerificationDialogVisible = ref(false)
-const verificationCodeArray = ref(['', '', '', '', '', ''])
-const codeInputs = ref<HTMLInputElement[]>([])
-const resendCountdown = ref(60)
-const resendEnabled = ref(false)
-let countdownTimer: number | null = null
-let resendTimer: number | null = null
+const showVerificationDialogVisible = ref(false);
+const verificationCodeArray = ref(['', '', '', '', '', '']);
+const codeInputs = ref<HTMLInputElement[]>([]);
+const resendCountdown = ref(60);
+const resendEnabled = ref(false);
+let countdownTimer: number | null = null;
+let resendTimer: number | null = null;
 
-// 发送验证码
 const sendVerificationCode = async () => {
-  if (countdown.value > 0) return
-  
+  if (countdown.value > 0) return;
+
   if (!/^1[3-9]\d{9}$/.test(phone.value)) {
-    Toast('请输入有效的手机号')
-    return
+    Toast('请输入有效的手机号');
+    return;
   }
 
   const toast = Toast.loading({
     message: '检查手机号中...',
     forbidClick: true,
     duration: 0
-  })
+  });
 
   try {
-    // 先检查手机号是否存在
-    const checkResponse = await authAPI.checkPhone(phone.value)
-    
+    const checkResponse = await authAPI.checkPhone({ phone: phone.value });
+
     if (checkResponse.code !== 200) {
-      Toast.clear()
-      Toast(checkResponse.message || '手机号未注册')
-      return
+      Toast.clear();
+      Toast(checkResponse.message || '手机号未注册');
+      return;
     }
 
     Toast.loading({
       message: '发送验证码中...',
       forbidClick: true,
       duration: 0
-    })
+    });
 
-    // 调用发送验证码API
     const response = await authAPI.sendCode({
-      phone: phone.value,
-      type: 'forget'
-    })
-    
-    Toast.clear()
-    
+      phone: phone.value
+    });
+
+    Toast.clear();
+
     if (response.code !== 200) {
-      Toast(response.message || '发送验证码失败')
-      return
+      Toast(response.message || '发送验证码失败');
+      return;
     }
-    
-    Toast('验证码已发送')
-    
-    verificationCodeArray.value = ['', '', '', '', '', '']
-    showVerificationDialogVisible.value = true
-    startResendCountdown()
-    
+
+    Toast('验证码已发送');
+
+    verificationCodeArray.value = ['', '', '', '', '', ''];
+    showVerificationDialogVisible.value = true;
+    startResendCountdown();
+
     setTimeout(() => {
       if (codeInputs.value[0]) {
-        codeInputs.value[0].focus()
+        codeInputs.value[0].focus();
       }
-    }, 300)
-    
-    // 启动按钮倒计时
-    countdown.value = 60
+    }, 300);
+
+    countdown.value = 60;
     const timer = setInterval(() => {
-      countdown.value--
+      countdown.value--;
       if (countdown.value <= 0) {
-        clearInterval(timer)
+        clearInterval(timer);
       }
-    }, 1000)
+    }, 1000);
   } catch (error: any) {
-    Toast.clear()
-    // 显示具体的错误信息
+    Toast.clear();
     if (error.response && error.response.data) {
-      Toast(error.response.data.message || '发送验证码失败')
+      Toast(error.response.data.message || '发送验证码失败');
     } else if (error.message) {
-      Toast(error.message)
+      Toast(error.message);
     } else {
-      Toast('网络错误，请稍后重试')
+      Toast('网络错误，请稍后重试');
     }
   }
 }
 
-// 处理验证码输入
 const handleCodeInput = (index: number, event: Event) => {
-  const input = event.target as HTMLInputElement
-  const value = input.value
-  
+  const input = event.target as HTMLInputElement;
+  const value = input.value;
+
   if (/^\d$/.test(value)) {
-    // 更新当前输入框
-    verificationCodeArray.value[index] = value
-    
-    // 自动跳转到下一个输入框
+
+    verificationCodeArray.value[index] = value;
+
     if (index < 5) {
-      const nextInput = codeInputs.value[index + 1]
+      const nextInput = codeInputs.value[index + 1];
       if (nextInput) {
-        nextInput.focus()
+        nextInput.focus();
       }
     }
   } else {
-    // 清空无效输入
-    input.value = ''
+
+    input.value = '';
   }
 }
-
-// 处理键盘事件
 const handleCodeKeyDown = (index: number, event: KeyboardEvent) => {
   if (event.key === 'Backspace' && !verificationCodeArray.value[index] && index > 0) {
-    const prevInput = codeInputs.value[index - 1]
+    const prevInput = codeInputs.value[index - 1];
     if (prevInput) {
-      prevInput.focus()
+      prevInput.focus();
     }
   }
 }
 
-// 验证验证码
 const verifyCode = async () => {
-  const verificationCode = verificationCodeArray.value.join('')
-  
+  const verificationCode = verificationCodeArray.value.join('');
+
   if (verificationCode.length !== 6) {
-    Toast('请输入6位验证码')
-    return
+    Toast('请输入6位验证码');
+    return;
   }
-  
+
   try {
-    // 调用验证验证码API
     const response = await authAPI.verifyCode({
       phone: phone.value,
-      code: verificationCode,
-      type: 'forget'
-    })
-    
+      code: verificationCode
+    });
+
     if (response.code !== 200) {
-      Toast(response.message || '验证码错误')
-      return
+      Toast(response.message || '验证码错误');
+      return;
     }
-    
-    showVerificationDialogVisible.value = false
-    Toast('验证成功')
-    
-    // 验证成功，跳转到设置新密码页面
-    router.push({ 
-      name: 'SetNewPassword', 
-      query: { 
-        phone: phone.value
-       } 
-    })
+
+    showVerificationDialogVisible.value = false;
+    Toast('验证成功');
+
+    router.push({
+      name: 'SetNewPassword',
+      query: {
+        phone: phone.value,
+        verifyCode: verificationCode
+      }
+    });
   } catch (error: any) {
-    // 显示具体的错误信息
     if (error.response && error.response.data) {
-      Toast(error.response.data.message || '验证码错误')
+      Toast(error.response.data.message || '验证码错误');
     } else if (error.message) {
-      Toast(error.message)
+      Toast(error.message);
     } else {
-      Toast('网络错误，请稍后重试')
+      Toast('网络错误，请稍后重试');
     }
   }
 }
 
-// 启动重新发送倒计时
+
 const startResendCountdown = () => {
-  // 重置倒计时
-  resendCountdown.value = 60
-  resendEnabled.value = false
-  
-  // 清除现有计时器
+  resendCountdown.value = 60;
+  resendEnabled.value = false;
+
   if (resendTimer) {
-    window.clearInterval(resendTimer)
-    resendTimer = null
+    window.clearInterval(resendTimer);
+    resendTimer = null;
   }
-  
-  // 启动新计时器
+
   resendTimer = window.setInterval(() => {
-    resendCountdown.value--
+    resendCountdown.value--;
     if (resendCountdown.value <= 0) {
-      resendEnabled.value = true
+      resendEnabled.value = true;
       if (resendTimer) {
-        window.clearInterval(resendTimer)
-        resendTimer = null
+        window.clearInterval(resendTimer);
+        resendTimer = null;
       }
     }
-  }, 1000)
+  }, 1000);
 }
 
-// 重新发送验证码
 const resendVerificationCode = async () => {
-  if (!resendEnabled.value) return
-  
+  if (!resendEnabled.value) return;
+
   try {
     Toast.loading({
       message: '发送中...',
       forbidClick: true,
       duration: 0
-    })
-    
-    // 调用发送验证码API
+    });
+
     const response = await authAPI.sendCode({
-      phone: phone.value,
-      type: 'forget'
-    })
-    
-    Toast.clear()
-    
+      phone: phone.value
+    });
+
+    Toast.clear();
+
     if (response.code !== 200) {
-      Toast(response.message || '发送验证码失败')
-      return
+      Toast(response.message || '发送验证码失败');
+      return;
     }
-    
-    Toast('验证码已重新发送')
-    
-    // 重置验证码
-    verificationCodeArray.value = ['', '', '', '', '', '']
-    
-    // 如果有焦点，聚焦第一个输入框
+
+    Toast('验证码已重新发送');
+
+    verificationCodeArray.value = ['', '', '', '', '', ''];
+
     if (codeInputs.value[0]) {
-      codeInputs.value[0].focus()
+      codeInputs.value[0].focus();
     }
-    
-    // 重新启动倒计时
-    startResendCountdown()
+
+    startResendCountdown();
   } catch (error: any) {
-    Toast.clear()
-    // 显示具体的错误信息
+    Toast.clear();
     if (error.response && error.response.data) {
-      Toast(error.response.data.message || '发送验证码失败')
+      Toast(error.response.data.message || '发送验证码失败');
     } else if (error.message) {
-      Toast(error.message)
+      Toast(error.message);
     } else {
-      Toast('网络错误，请稍后重试')
+      Toast('网络错误，请稍后重试');
     }
   }
 }
 
-// 组件卸载时清除计时器
 onMounted(() => {
   window.addEventListener('beforeunload', () => {
     if (countdownTimer) {
-      window.clearInterval(countdownTimer)
-      countdownTimer = null
+      window.clearInterval(countdownTimer);
+      countdownTimer = null;
     }
     if (resendTimer) {
-      window.clearInterval(resendTimer)
-      resendTimer = null
+      window.clearInterval(resendTimer);
+      resendTimer = null;
     }
-  })
+  });
 })
 </script>
 
 <style scoped>
 .forget-container {
   min-height: 100vh;
-  background: linear-gradient(white,#9CD6FE 35%);
+  background: linear-gradient(white, #9CD6FE 35%);
 }
+
 .form-container {
   padding: 20px;
   margin: 30px 0 50px;
@@ -359,19 +306,18 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 验证码对话框样式 */
 .verification-dialog {
   :deep(.van-dialog) {
     border-radius: 16px;
     overflow: hidden;
   }
-  
+
   :deep(.van-dialog__header) {
     padding: 16px 16px 8px;
     font-size: 18px;
     font-weight: 600;
   }
-  
+
   :deep(.van-dialog__content) {
     padding: 0 16px 16px;
   }
