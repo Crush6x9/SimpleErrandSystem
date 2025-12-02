@@ -150,25 +150,21 @@ export const orderAPI = {
   cancel: (orderId: string) =>
     api.delete(`/orders/${orderId}/cancel`),
 
-  // 查询订单列表
-  getList: (params: {
+  getList: (data: {
     type?: string;
     page?: number;
     size?: number;
   }) => {
-    return api.get('/orders/list', {
-      params: {
-        ...params,
-        page: params.page || 1,
-        size: params.size || 10
-      }
+    return api.post('/orders/list', {
+      type: data.type || 'all',
+      page: data.page || 1,
+      size: data.size || 10
     });
   },
 
   getDetail: (orderId: string) =>
     api.get(`/orders/${orderId}`),
 
-  // 获取订单统计
   getStats: () =>
     api.get('/orders/stats'),
 };

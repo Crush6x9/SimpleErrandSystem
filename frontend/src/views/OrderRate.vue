@@ -7,39 +7,25 @@
         <p class="subtitle">恭喜</p>
         <p class="subtitle">订单已被完成</p>
         <p class="prompt">请点击下方图标进行评价</p>
-        
+
         <div class="rating-options">
-          <div 
-            class="rating-option" 
-            :class="{ active: review === '1' }"
-            @click="selectRating('1')"
-          >
+          <div class="rating-option" :class="{ active: review === '1' }" @click="selectRating('1')">
             <van-image width="100" src="/my-good.png" />
             <span>好评</span>
           </div>
-          <div 
-            class="rating-option" 
-            :class="{ active: review === '0' }"
-            @click="selectRating('0')"
-          >
+          <div class="rating-option" :class="{ active: review === '0' }" @click="selectRating('0')">
             <van-image width="100" src="/my-bad.png" />
             <span>差评</span>
           </div>
         </div>
-        
+
         <div class="message" v-if="review">
           <p>感谢您的评价</p>
           <p>帮助他人分辨</p>
         </div>
-        
+
         <div class="actions">
-          <van-button 
-            type="primary" 
-            size="large" 
-            :disabled="!review" 
-            @click="submitRating"
-            :loading="loading"
-          >
+          <van-button type="primary" size="large" :disabled="!review" @click="submitRating" :loading="loading">
             提交评价
           </van-button>
         </div>
@@ -67,8 +53,7 @@ onMounted(() => {
     router.push('/login')
     return
   }
-  
-  // 获取订单ID
+
   if (route.query.orderId) {
     orderId.value = route.query.orderId as string
   } else {
@@ -93,15 +78,14 @@ const submitRating = async () => {
 
   try {
     loading.value = true
-    
-    // 调用评价API
-    const response = await evaluationAPI.evaluate(orderId.value, {
+
+    const response = await evaluationAPI.createEvaluation(orderId.value, {
       review: review.value
     })
-    
+
     if (response.code === 200) {
       Toast.success('评价提交成功')
-      
+
       // 延迟跳转，让用户看到成功提示
       setTimeout(() => {
         router.push('/home')
@@ -111,7 +95,7 @@ const submitRating = async () => {
     }
   } catch (error: any) {
     console.error('评价提交失败:', error)
-    Toast('评价提交失败')
+    Toast(error.message || '评价提交失败')
   } finally {
     loading.value = false
   }
@@ -201,7 +185,12 @@ const submitRating = async () => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 </style>

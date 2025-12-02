@@ -1,12 +1,7 @@
 <template>
   <div class="order-detail">
-    <van-nav-bar 
-      title="订单详情" 
-      left-text="返回" 
-      left-arrow 
-      @click-left="handleBack" 
-    />
-    
+    <van-nav-bar title="订单详情" left-text="返回" left-arrow @click-left="handleBack" />
+
     <div class="detail-content">
       <div class="status-section">
         <div class="status-badge" :class="'status-' + order.status">
@@ -14,81 +9,57 @@
         </div>
         <div v-if="order.evaluated" class="rated-badge">已评价</div>
       </div>
-      
+
       <van-cell-group>
-        <van-cell title="订单编号" :value="order.orderId" />
+        <van-cell title="订单主题" :value="order.title" />
         <van-cell title="下单时间" :value="formatTime(order.publishTime)" />
-        <van-cell title="互助时间" :value="formatHelpTime(order.helpTime)" />
+        <van-cell title="期望时间" :value="formatHelpTime(order.helpTime)" />
         <van-cell title="发布者" :value="order.clientUsername" />
         <van-cell title="联系方式" :value="order.phone || '暂无'" />
         <van-cell v-if="order.helperUsername" title="接单人" :value="order.helperUsername" />
         <van-cell v-if="order.acceptTime" title="接单时间" :value="formatTime(order.acceptTime)" />
-        <van-cell v-if="canCancelAccept" title="取消接单剩余时间" :value="cancelAcceptRemainingTime" />
+        <van-cell v-if="order.completeTime" title="完成时间" :value="formatTime(order.completeTime)" />
+        <van-cell v-if="order.address" title="送达地址" :value="order.address" />
       </van-cell-group>
-      
+
       <div class="content-section">
-        <h3>订单内容</h3>
-        <p class="order-title">{{ order.title }}</p>
+        <h3>订单描述</h3>
         <p class="order-description">{{ order.description }}</p>
-        <p class="order-address" v-if="order.address">送达地址：{{ order.address }}</p>
       </div>
-      
+
       <div class="price-section">
         <div class="price">¥{{ order.reward?.toFixed(2) || '0.00' }}</div>
-        <div class="price-label">悬赏佣金</div>
+        <div class="price-label">悬赏金额</div>
       </div>
-      
+
       <div class="action-buttons" v-if="showActions">
-        <van-button 
-          v-if="order.status === '0' && !isPublisher" 
-          type="primary" 
-          size="large" 
-          @click="handleAccept"
-          :loading="loading"
-        >
+        <van-button v-if="order.status === '0' && !isPublisher && userRole === '1'" type="primary" size="large"
+          @click="handleAccept" :loading="loading">
           接单
         </van-button>
-        <van-button 
-          v-else-if="order.status === '1' && isHelper" 
-          type="success" 
-          size="large" 
-          @click="handleComplete"
-          :loading="loading"
-        >
+        <van-button v-else-if="order.status === '1' && isHelper" type="success" size="large" @click="handleComplete"
+          :loading="loading">
           完成订单
         </van-button>
-        <van-button 
-          v-else-if="order.status === '2' && isPublisher && !order.evaluated" 
-          type="warning" 
-          size="large" 
-          @click="handleRate"
-        >
+        <van-button v-else-if="order.status === '2' && isPublisher && !order.evaluated" type="warning" size="large"
+          @click="handleRate">
           评价本次帮助
         </van-button>
-        
+
         <div v-else-if="order.status === '2' && isPublisher && order.evaluated" class="rated-text">
           您已评价过此订单
+        </div>
+        <div v-else-if="order.status === '0' && !isPublisher && userRole !== '1'" class="not-helper-text">
+          只有跑腿员可以接单
         </div>
       </div>
 
       <div class="extra-action-buttons" v-if="showExtraActions">
-        <van-button 
-          v-if="canCancelAccept" 
-          type="warning" 
-          size="large" 
-          @click="handleCancelAccept"
-          :loading="loading"
-        >
+        <van-button v-if="canCancelAccept" type="warning" size="large" @click="handleCancelAccept" :loading="loading">
           取消接单 (剩余{{ cancelAcceptRemainingTime }})
         </van-button>
-        <van-button 
-          v-if="canDeleteOrder" 
-          type="danger" 
-          size="large" 
-          @click="handleDeleteOrder"
-          :loading="loading"
-        >
-          删除订单
+        <van-button v-if="canCancelOrder" type="danger" size="large" @click="handleCancelOrder" :loading="loading">
+          取消订单
         </van-button>
       </div>
     </div>
@@ -100,20 +71,18 @@ import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Toast, Dialog } from 'vant'
 import { orderAPI } from '@/api'
-import { getUserId, isAuthenticated } from '@/utils/auth'
+import { getUserId, getUserInfo } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
 
-// 状态映射
 const statusMap: { [key: string]: string } = {
   '0': '待帮助',
-  '1': '进行中', 
+  '1': '进行中',
   '2': '已完成',
   '3': '已取消'
 }
 
-// 订单数据
 const order = ref<any>({
   orderId: 0,
   title: '',
@@ -134,10 +103,26 @@ const order = ref<any>({
 
 const loading = ref(false)
 const currentUserId = ref<string | null>(null)
+const userRole = ref<string>('0')
 
-// 取消接单倒计时相关
 const cancelAcceptRemainingTime = ref('')
 let countdownTimer: number | null = null
+
+onMounted(() => {
+  const userInfo = getUserInfo()
+  currentUserId.value = userInfo?.id ? userInfo.id.toString() : null
+  userRole.value = userInfo?.role || '0'
+
+  loadOrderDetail()
+  startCountdownTimer()
+})
+
+onUnmounted(() => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+})
 
 // 计算属性
 const isPublisher = computed(() => {
@@ -152,29 +137,28 @@ const isHelper = computed(() => {
 const canCancelAccept = computed(() => {
   if (order.value.status !== '1') return false // 只有进行中的订单
   if (!isHelper.value) return false // 只有接单者可以取消
-  
+
   // 检查接单时间是否在3分钟内
   if (!order.value.acceptTime) return false
-  
+
   const acceptTime = new Date(order.value.acceptTime).getTime()
   const currentTime = new Date().getTime()
   const timeDiff = currentTime - acceptTime
-  const threeMinutes = 3 * 60 * 1000 // 3分钟
-  
+  const threeMinutes = 3 * 60 * 1000
+
   return timeDiff <= threeMinutes
 })
 
-// 检查是否可以删除订单（发布者删除未接单的订单）
-const canDeleteOrder = computed(() => {
+// 检查是否可以取消订单（发布者取消未接单的订单）
+const canCancelOrder = computed(() => {
   if (order.value.status !== '0') return false // 只有待帮助的订单
-  if (!isPublisher.value) return false // 只有发布者可以删除
-  
+  if (!isPublisher.value) return false // 只有发布者可以取消
+
   return true
 })
 
-// 显示额外操作按钮
 const showExtraActions = computed(() => {
-  return canCancelAccept.value || canDeleteOrder.value
+  return canCancelAccept.value || canCancelOrder.value
 })
 
 const showActions = computed(() => {
@@ -187,33 +171,13 @@ const showActions = computed(() => {
   return true
 })
 
-onMounted(() => {
-  if (!isAuthenticated()) {
-    Toast('请先登录')
-    router.push('/login')
-    return
-  }
-  
-  currentUserId.value = getUserId()
-  loadOrderDetail()
-  startCountdownTimer()
-})
-
-onUnmounted(() => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-    countdownTimer = null
-  }
-})
-
-// 加载订单数据
 const loadOrderDetail = async () => {
   const orderId = route.params.id as string
-  
+
   try {
     loading.value = true
     const response = await orderAPI.getDetail(orderId)
-    
+
     if (response.code === 200 && response.data) {
       order.value = response.data
       updateCancelAcceptRemainingTime()
@@ -228,36 +192,34 @@ const loadOrderDetail = async () => {
   }
 }
 
-// 更新取消接单剩余时间
 const updateCancelAcceptRemainingTime = () => {
   if (!order.value.acceptTime) {
     cancelAcceptRemainingTime.value = ''
     return
   }
-  
+
   const acceptTime = new Date(order.value.acceptTime).getTime()
   const currentTime = new Date().getTime()
   const timeDiff = currentTime - acceptTime
-  const threeMinutes = 3 * 60 * 1000 // 3分钟
-  
+  const threeMinutes = 3 * 60 * 1000
+
   if (timeDiff > threeMinutes) {
     cancelAcceptRemainingTime.value = '已过期'
     return
   }
-  
+
   const remainingTime = threeMinutes - timeDiff
   const minutes = Math.floor(remainingTime / (60 * 1000))
   const seconds = Math.floor((remainingTime % (60 * 1000)) / 1000)
-  
+
   cancelAcceptRemainingTime.value = `${minutes}分${seconds}秒`
 }
 
-// 启动倒计时定时器
 const startCountdownTimer = () => {
   if (countdownTimer) {
     clearInterval(countdownTimer)
   }
-  
+
   countdownTimer = setInterval(() => {
     if (canCancelAccept.value) {
       updateCancelAcceptRemainingTime()
@@ -275,7 +237,6 @@ const handleBack = () => {
   router.back()
 }
 
-// 处理接单
 const handleAccept = async () => {
   Dialog.confirm({
     title: '确认接单',
@@ -284,10 +245,9 @@ const handleAccept = async () => {
     try {
       loading.value = true
       const response = await orderAPI.accept(order.value.orderId.toString())
-      
+
       if (response.code === 200) {
         Toast.success('接单成功')
-        // 重新加载订单详情
         await loadOrderDetail()
         startCountdownTimer()
       } else {
@@ -301,7 +261,6 @@ const handleAccept = async () => {
   })
 }
 
-// 处理完成订单
 const handleComplete = async () => {
   Dialog.confirm({
     title: '确认完成',
@@ -310,10 +269,9 @@ const handleComplete = async () => {
     try {
       loading.value = true
       const response = await orderAPI.complete(order.value.orderId.toString())
-      
+
       if (response.code === 200) {
         Toast.success('订单完成成功')
-        // 跳转到完成页面
         router.push({
           name: 'OrderComplete',
           query: { amount: order.value.reward }
@@ -329,16 +287,13 @@ const handleComplete = async () => {
   })
 }
 
-// 处理评价
 const handleRate = () => {
-  // 跳转到评价页面
   router.push({
     name: 'OrderRate',
     query: { orderId: order.value.orderId }
   })
 }
 
-// 处理取消接单
 const handleCancelAccept = async () => {
   Dialog.confirm({
     title: '取消接单',
@@ -347,13 +302,11 @@ const handleCancelAccept = async () => {
     try {
       loading.value = true
       const response = await orderAPI.cancelAccept(order.value.orderId.toString())
-      
+
       if (response.code === 200) {
         Toast.success('取消接单成功')
-        // 重新加载订单详情
         await loadOrderDetail()
-        
-        // 停止倒计时
+
         if (countdownTimer) {
           clearInterval(countdownTimer)
           countdownTimer = null
@@ -369,8 +322,7 @@ const handleCancelAccept = async () => {
   })
 }
 
-// 处理删除订单
-const handleDeleteOrder = async () => {
+const handleCancelOrder = async () => {
   Dialog.confirm({
     title: '取消订单',
     message: '确定要取消这个订单吗？取消后无法恢复。'
@@ -378,7 +330,7 @@ const handleDeleteOrder = async () => {
     try {
       loading.value = true
       const response = await orderAPI.cancel(order.value.orderId.toString())
-      
+
       if (response.code === 200) {
         Toast.success('订单取消成功')
         router.back()
@@ -393,14 +345,12 @@ const handleDeleteOrder = async () => {
   })
 }
 
-// 格式化时间
 const formatTime = (timeStr: string) => {
   if (!timeStr) return ''
   const date = new Date(timeStr)
   return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 
-// 格式化帮助时间
 const formatHelpTime = (helpTime: string) => {
   if (!helpTime) return '尽快'
   return formatTime(helpTime)
@@ -445,9 +395,26 @@ const formatHelpTime = (helpTime: string) => {
   font-weight: bold;
 }
 
-.status-0 { background: #ff6b6b; } /* 待帮助 */
-.status-1 { background: #4ecdc4; } /* 进行中 */
-.status-2 { background: #1abc9c; } /* 已完成 */
+.status-0 {
+  background: #ff6b6b;
+}
+
+/* 待帮助 */
+.status-1 {
+  background: #4ecdc4;
+}
+
+/* 进行中 */
+.status-2 {
+  background: #1abc9c;
+}
+
+/* 已完成 */
+.status-3 {
+  background: #95a5a6;
+}
+
+/* 已取消 */
 
 .content-section {
   background: white;
@@ -499,7 +466,8 @@ const formatHelpTime = (helpTime: string) => {
   gap: 10px;
 }
 
-.rated-text {
+.rated-text,
+.not-helper-text {
   text-align: center;
   color: #999;
   font-size: 16px;

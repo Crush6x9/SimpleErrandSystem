@@ -172,6 +172,7 @@ const loadWalletInfo = async () => {
     console.error('加载钱包信息失败:', error)
   }
 }
+
 const loadWalletBalance = async () => {
   try {
     const response = await walletAPI.getWallet()
@@ -187,6 +188,7 @@ const loadWalletBalance = async () => {
 const formatAmount = (amount: number) => {
   return amount.toFixed(2)
 }
+
 const handleAvatarClick = () => {
   router.push({ name: 'Profile' })
 }
