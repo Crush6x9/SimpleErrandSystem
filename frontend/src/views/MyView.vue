@@ -8,10 +8,10 @@
 
     <div class="user-section">
       <div class="avatar">
-        <img :src="user.avatar || user.avatarUrl || '/default-profile-photo.png'" @click="handleAvatarClick" alt="头像" />
+        <img :src="user.avatarUrl || '/default-profile-photo.png'" @click="handleAvatarClick" alt="头像" />
       </div>
       <div class="user-info">
-        <div class="user-name" @click.stop="handleNicknameClick">{{ user.nickname || user.username || '用户' }}</div>
+        <div class="user-name" @click.stop="handleNicknameClick">{{ user.username || '用户' }}</div>
         <div class="user-id" @click.stop="handleStudentIdClick">
           学号: {{ user.studentId || '未设置' }}
         </div>
@@ -21,15 +21,15 @@
     <!-- 数据统计 -->
     <div class="data-stats">
       <div class="stat-item" @click="handleDataItemClick('receivedOrders')">
-        <div class="stat-value">{{ user.receivedOrders || 0 }}</div>
+        <div class="stat-value">{{ stats.myAcceptedOrders || 0 }}</div>
         <div class="stat-label">已接订单</div>
       </div>
       <div class="stat-item" @click="handleDataItemClick('postedOrders')">
-        <div class="stat-value">{{ user.postedOrders || 0 }}</div>
+        <div class="stat-value">{{ stats.myPublishedOrders || 0 }}</div>
         <div class="stat-label">已发订单</div>
       </div>
       <div class="stat-item--earning" @click="handleDataItemClick('earnings')">
-        <div class="stat-value">¥{{ (user.earnings || 0).toFixed(2) }}</div>
+        <div class="stat-value">¥{{ (walletInfo?.balance || 0).toFixed(2) }}</div>
         <div class="stat-label">收益 ></div>
       </div>
     </div>
@@ -38,17 +38,16 @@
     <div class="rating-section">
       <div class="rating-item--good">
         <van-image width="150px" height="150px" src="/my-good.png" class="rating-img" />
-        <i class="rating-value">{{ user.好评 || 0 }}</i>
+        <i class="rating-value">{{ evaluationStats.goodReviews || 0 }}</i>
         <i class="rating-label">好评</i>
       </div>
       <div class="rating-item--bad">
         <van-image width="150px" src="/my-bad.png" class="rating-img" />
-        <i class="rating-value">{{ user.差评 || 0 }}</i>
+        <i class="rating-value">{{ evaluationStats.badReviews || 0 }}</i>
         <i class="rating-label">差评</i>
       </div>
     </div>
 
-    <!-- 昵称编辑浮窗 -->
     <van-popup v-model:show="showNicknameEdit" position="bottom" :style="{ height: '30%' }" round class="popup">
       <div class="nickname-edit">
         <h3>修改昵称</h3>
@@ -60,7 +59,6 @@
       </div>
     </van-popup>
 
-    <!-- 客服联系浮窗 -->
     <van-dialog v-model:show="showContactDialog" title="联系客服" :show-confirm-button="false"
       :close-on-click-overlay="true">
       <div class="contact-dialog">
@@ -73,106 +71,115 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { Toast, Dialog, ImagePreview } from 'vant'
-import { isAuthenticated, getUserPhone, getUserId } from '@/utils/auth'
-import { getUser, updateUser, loadUserFromServer } from '@/utils/user'
-import { evaluationAPI, orderAPI, userAPI } from '@/api'
+import { Toast } from 'vant'
+import { isAuthenticated, getUserId } from '@/utils/auth'
+import { getUser, updateUser, loadUserFromServer, updateUsername } from '@/utils/user'
+import { evaluationAPI, orderAPI, walletAPI } from '@/api'
 
 const router = useRouter()
 const isAuth = ref(false)
-const userPhone = ref('')
 const user = ref(getUser())
 const showNicknameEdit = ref(false)
 const newNickname = ref('')
 const showContactDialog = ref(false)
 
+// 统计数据
+const stats = reactive({
+  myAcceptedOrders: 0,
+  myPublishedOrders: 0
+})
+
+const evaluationStats = reactive({
+  goodReviews: 0,
+  badReviews: 0
+})
+
+const walletInfo = ref<any>(null)
+
 onMounted(() => {
   checkAuthStatus()
   loadUserData()
+  loadStats()
 })
 
-// 检查认证状态
 const checkAuthStatus = () => {
   isAuth.value = isAuthenticated()
-  if (isAuth.value) {
-    userPhone.value = getUserPhone() || ''
-  } else {
+  if (!isAuth.value) {
     router.push({ name: 'Login', query: { redirect: '/my' } })
   }
 }
 
-// 处理返回
 const handleBack = () => {
   router.back()
 }
 
-// 加载用户数据
 const loadUserData = async () => {
   try {
-    const userId = getUserId()
-    if (userId) {
-      // 从服务器加载用户数据
-      const userData = await loadUserFromServer(userId)
+    if (isAuthenticated()) {
+      const userData = await loadUserFromServer()
       user.value = userData
-      
-      // 加载订单统计
-      await loadOrderStats(userId)
-      // 加载评价统计
-      await loadEvaluationStats(userId)
-    } else {
-      user.value = getUser()
     }
   } catch (error) {
     Toast('加载用户数据失败')
   }
 }
 
-// 加载订单统计
-const loadOrderStats = async (userId: string) => {
+const loadStats = async () => {
+  try {
+    await loadOrderStats()
+    await loadEvaluationStats()
+    await loadWalletInfo()
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+  }
+}
+
+const loadOrderStats = async () => {
   try {
     const response = await orderAPI.getStats()
-    if (response.data) {
-      const updatedUser = updateUser({
-        receivedOrders: response.data.myAcceptedOrders || 0,
-        postedOrders: response.data.myPublishedOrders || 0
-      })
-      user.value = updatedUser
+    if (response.code === 200 && response.data) {
+      stats.myAcceptedOrders = response.data.myAcceptedOrders || 0
+      stats.myPublishedOrders = response.data.myPublishedOrders || 0
     }
   } catch (error) {
     console.error('加载订单统计失败:', error)
   }
 }
 
-// 加载评价统计
-const loadEvaluationStats = async (userId: string) => {
+const loadEvaluationStats = async () => {
   try {
-    const response = await evaluationAPI.getStats(userId)
-    if (response.data) {
-      const updatedUser = updateUser({
-        好评: response.data.goodReviews || 0,
-        差评: response.data.badReviews || 0
-      })
-      user.value = updatedUser
+    const response = await evaluationAPI.getHelperEvaluationStats()
+    if (response.code === 200 && response.data) {
+      evaluationStats.goodReviews = response.data.goodReviews || 0
+      evaluationStats.badReviews = response.data.badReviews || 0
     }
   } catch (error) {
     console.error('加载评价统计失败:', error)
   }
 }
 
-// 处理头像点击
+const loadWalletInfo = async () => {
+  try {
+    const response = await walletAPI.getWallet()
+    if (response.code === 200 && response.data) {
+      walletInfo.value = response.data
+    }
+  } catch (error) {
+    console.error('加载钱包信息失败:', error)
+  }
+}
+
 const handleAvatarClick = () => {
   router.push({ name: 'Profile' })
 }
 
-// 处理昵称点击
 const handleNicknameClick = () => {
-  newNickname.value = user.value.nickname || user.value.username || ''
+  newNickname.value = user.value.username || ''
   showNicknameEdit.value = true
 }
 
-// 保存昵称
 const saveNickname = async () => {
   if (!newNickname.value.trim()) {
     Toast('昵称不能为空')
@@ -180,54 +187,38 @@ const saveNickname = async () => {
   }
 
   try {
-    const userId = getUserId()
-    if (userId) {
-      const response = await userAPI.updateUsername(userId, newNickname.value.trim())
-      if (response.code === 200) {
-        const updatedUser = updateUser({ 
-          nickname: newNickname.value.trim(),
-          username: newNickname.value.trim()
-        })
-        user.value = updatedUser
-        showNicknameEdit.value = false
-        Toast('昵称更新成功')
-      }
-    }
-  } catch (error) {
-    Toast('昵称更新失败')
+    const userData = await updateUsername(newNickname.value.trim())
+    user.value = userData
+    showNicknameEdit.value = false
+    Toast('昵称更新成功')
+  } catch (error: any) {
+    Toast(error.message || '昵称更新失败')
   }
 }
 
-// 处理学号点击
 const handleStudentIdClick = () => {
   if (user.value.studentId) {
-    Toast('学号已复制到剪贴板')
     navigator.clipboard.writeText(user.value.studentId)
+    Toast('学号已复制到剪贴板')
   }
 }
 
-// 处理数据项点击
 const handleDataItemClick = (type: string) => {
   if (type === 'earnings') {
     router.push({ name: 'Wallet' })
   } else if (type === 'receivedOrders') {
-    // 跳转到全部订单页面，并指定显示"我帮助的"标签页
     router.push({
       path: '/help',
       query: { tab: 'helping' }
     })
   } else if (type === 'postedOrders') {
-    // 跳转到全部订单页面，并指定显示"我发布的"标签页
     router.push({
       path: '/help',
       query: { tab: 'mine' }
     })
-  } else {
-    Toast(`查看${type}详情`)
   }
 }
 
-// 处理联系客服
 const handleContactClick = () => {
   showContactDialog.value = true
 }

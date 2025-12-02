@@ -38,13 +38,12 @@ export const updateUser = (updates: Partial<typeof DEFAULT_USER>) => {
 // 从后端加载用户信息
 export const loadUserFromServer = async () => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      console.error('未找到认证令牌');
+    if (!isAuthenticated()) {
+      console.error('用户未登录');
       return getUser();
     }
 
-    const response = await userAPI.getUserInfo(token);
+    const response = await userAPI.getUserInfo();
     if (response.code === 200 && response.data) {
       saveUser(response.data);
       return response.data;
@@ -57,15 +56,14 @@ export const loadUserFromServer = async () => {
 
 export const uploadAvatar = async (file: File) => {
   try {
-    const token = getAuthToken();
-    if (!token) {
+    if (!isAuthenticated()) {
       throw new Error('未登录');
     }
 
     const formData = new FormData();
     formData.append('avatar', file);
 
-    const response = await userAPI.uploadAvatar(formData, token);
+    const response = await userAPI.uploadAvatar(formData);
     if (response.code === 200 && response.data) {
       const user = getUser();
       user.avatarUrl = response.data;
@@ -86,8 +84,7 @@ export const submitCertification = async (certificationData: {
   avatar?: File;
 }) => {
   try {
-    const token = getAuthToken();
-    if (!token) {
+    if (!isAuthenticated()) {
       throw new Error('未登录');
     }
 
@@ -98,7 +95,7 @@ export const submitCertification = async (certificationData: {
       formData.append('avatar', certificationData.avatar);
     }
 
-    const response = await userAPI.certification(formData, token);
+    const response = await userAPI.certification(formData);
     if (response.code === 200 && response.data) {
       saveUser(response.data);
       return response.data;
@@ -112,12 +109,11 @@ export const submitCertification = async (certificationData: {
 
 export const updateUsername = async (username: string) => {
   try {
-    const token = getAuthToken();
-    if (!token) {
+    if (!isAuthenticated()) {
       throw new Error('未登录');
     }
 
-    const response = await userAPI.updateUsername({ username }, token);
+    const response = await userAPI.updateUsername({ username });
     if (response.code === 200 && response.data) {
       saveUser(response.data);
       return response.data;
@@ -125,6 +121,35 @@ export const updateUsername = async (username: string) => {
     throw new Error(response.message || '修改用户名失败');
   } catch (error) {
     console.error('修改用户名失败:', error);
+    throw error;
+  }
+}
+
+export const updateUserInfo = async (data: {
+  username?: string;
+  phone?: string;
+  studentId?: string;
+  idCardImage?: File;
+}) => {
+  try {
+    if (!isAuthenticated()) {
+      throw new Error('未登录');
+    }
+
+    const formData = new FormData();
+    if (data.username) formData.append('username', data.username);
+    if (data.phone) formData.append('phone', data.phone);
+    if (data.studentId) formData.append('studentId', data.studentId);
+    if (data.idCardImage) formData.append('idCardImage', data.idCardImage);
+
+    const response = await userAPI.updateUserInfo(formData);
+    if (response.code === 200 && response.data) {
+      saveUser(response.data);
+      return response.data;
+    }
+    throw new Error(response.message || '更新用户信息失败');
+  } catch (error) {
+    console.error('更新用户信息失败:', error);
     throw error;
   }
 }

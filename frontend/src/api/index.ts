@@ -97,39 +97,32 @@ export const authAPI = {
 
 // 用户相关接口
 export const userAPI = {
-  updateUsername: (data: { username: string }, token: string) =>
-    api.put('/user/username', data, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  updateUsername: (data: { username: string }) =>
+    api.put('/user/username', data),
 
   // 用户认证成为跑腿员
-  certification: (data: FormData, token: string) =>
+  certification: (data: FormData) =>
     api.post('/user/certification', data, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'multipart/form-data'
       }
     }),
 
-  getUserInfo: (token: string) =>
-    api.get('/user/info', {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getUserInfo: () =>
+    api.get('/user/info'),
 
-  updateUserInfo: (data: FormData, token: string) =>
+  updateUserInfo: (data: FormData) =>
     api.put('/user/profile', data, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'multipart/form-data'
       }
     }),
 
   // 上传头像
-  uploadAvatar: (data: FormData, token: string) =>
+  uploadAvatar: (data: FormData) =>
     api.post('/user/avatar', data, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'multipart/form-data'
       }
     }),
 };
@@ -143,103 +136,73 @@ export const orderAPI = {
     helpTime: string;
     phone: string;
     reward: number;
-  }, token: string) => api.post('/orders/publish', data, {
-    headers: { Authorization: `Bearer ${token}` }
-  }),
+  }) => api.post('/orders/publish', data),
 
-  accept: (orderId: string, token: string) =>
-    api.put(`/orders/${orderId}/accept`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  accept: (orderId: string) =>
+    api.put(`/orders/${orderId}/accept`),
 
-  cancelAccept: (orderId: string, token: string) =>
-    api.put(`/orders/${orderId}/cancel-accept`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  cancelAccept: (orderId: string) =>
+    api.put(`/orders/${orderId}/cancel-accept`),
 
-  complete: (orderId: string, token: string) =>
-    api.put(`/orders/${orderId}/complete`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  complete: (orderId: string) =>
+    api.put(`/orders/${orderId}/complete`),
 
-  cancel: (orderId: string, token: string) =>
-    api.delete(`/orders/${orderId}/cancel`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  cancel: (orderId: string) =>
+    api.delete(`/orders/${orderId}/cancel`),
 
-  // 查询订单列表
   getList: (params: {
     type?: string;
     page?: number;
     size?: number;
-  }, token: string) => {
+  }) => {
     return api.get('/orders/list', {
       params: {
         ...params,
         page: params.page || 1,
         size: params.size || 10
-      },
-      headers: { Authorization: `Bearer ${token}` }
+      }
     });
   },
 
-  getDetail: (orderId: string, token: string) =>
-    api.get(`/orders/${orderId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getDetail: (orderId: string) =>
+    api.get(`/orders/${orderId}`),
 
   // 获取订单统计
-  getStats: (token: string) =>
-    api.get('/orders/stats', {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getStats: () =>
+    api.get('/orders/stats'),
 };
 
 // 钱包相关接口
 export const walletAPI = {
   // 获取钱包信息
-  getWallet: (token: string) =>
-    api.get('/wallet/list', {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getWallet: () =>
+    api.get('/wallet/list'),
 
   // 提现
-  withdraw: (data: { amount: number }, token: string) =>
-    api.post('/wallet/withdraw', data, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  withdraw: (data: { amount: number }) =>
+    api.post('/wallet/withdraw', data),
 
   // 获取提现记录
-  getWithdrawals: (token: string) =>
-    api.get('/wallet/withdrawals', {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getWithdrawals: () =>
+    api.get('/wallet/withdrawals'),
 
   // 获取账单明细
-  getBills: (params: { page?: number; size?: number; type?: string }, token: string) =>
+  getBills: (params: { page?: number; size?: number; type?: string }) =>
     api.get('/wallet/bills', {
-      params,
-      headers: { Authorization: `Bearer ${token}` }
+      params
     }),
 };
 
 // 评价相关接口
 export const evaluationAPI = {
-  evaluate: (orderId: string, data: { review: string }, token: string) =>
-    api.post(`/evaluations/${orderId}/evaluate`, data, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  createEvaluation: (orderId: string, data: { review: string }) =>
+    api.post(`/evaluations/${orderId}`, data),
 
-  getEvaluation: (orderId: string, token: string) =>
-    api.get(`/evaluations/${orderId}/detail`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getEvaluationByOrderId: (orderId: string) =>
+    api.get(`/evaluations/${orderId}`),
 
-  // 获取评价统计
-  getStats: (token: string) =>
-    api.get('/evaluations/stats', {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
+  getHelperEvaluationStats: () =>
+    api.get('/evaluations/stats'),
 };
 
 export default api;
