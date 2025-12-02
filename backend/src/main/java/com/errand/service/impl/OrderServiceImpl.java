@@ -184,9 +184,13 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Result getOrderStats(Long userId) {
         try {
+            // 获取总订单数
             Long totalOrders = orderMapper.countAllOrders();
+            // 获取待接取订单数
             Long availableOrders = orderMapper.countAvailableOrders();
+            // 获取本用户发布订单数
             Long myPublishedOrders = orderMapper.countPublishedOrders(userId);
+            // 获取本用户接取订单数
             Long myAcceptedOrders = orderMapper.countAcceptedOrders(userId);
 
             OrderStats stats = new OrderStats(
@@ -228,12 +232,6 @@ public class OrderServiceImpl implements OrderService {
             Order order = orderMapper.selectOrderById(orderId);
             if (order == null) {
                 return Result.error("订单不存在");
-            }
-
-            // 检查权限：只有订单相关用户可以查看详情
-            if (!order.getClientId().equals(userId) &&
-                    (order.getHelperId() == null || !order.getHelperId().equals(userId))) {
-                return Result.error("无权查看此订单");
             }
 
             OrderInfo orderInfo = convertToOrderInfo(order);
