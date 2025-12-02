@@ -37,7 +37,7 @@
         SELECT COUNT(*) > 0 FROM evaluation WHERE order_id = #{orderId}
     </select>
 
-    <select id="countEvaluationsByHelperIdAndReview" resultType="Integer">
+    <select id="countEvaluationsByHelperIdAndReview" resultType="Long">
         SELECT COUNT(*)
         FROM evaluation e
                  INNER JOIN `order` o ON e.order_id = o.order_id

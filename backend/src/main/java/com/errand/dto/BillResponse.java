@@ -13,7 +13,7 @@ public class BillResponse {
     private BigDecimal todayIncome;
 
     @ApiModelProperty(value = "账单列表")
-    private List<BillInfo> billList;
+    private List<BillInfo> bills;
 
     @ApiModelProperty(value = "总记录数")
     private Long total;

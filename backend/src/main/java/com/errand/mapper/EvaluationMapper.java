@@ -33,7 +33,7 @@ public interface EvaluationMapper {
     boolean existsEvaluationByOrderId(Long orderId);
 
     // 统计跑腿员的好评/差评数量
-    Integer countEvaluationsByHelperIdAndReview(
+    Long countEvaluationsByHelperIdAndReview(
             @Param("helperId") Long helperId,
             @Param("review") String review);
 }

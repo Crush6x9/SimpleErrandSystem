@@ -1,6 +1,7 @@
 package com.errand.service.impl;
 
 import com.errand.dto.EvaluationRequest;
+import com.errand.dto.EvaluationStats;
 import com.errand.dto.Result;
 import com.errand.entity.Evaluation;
 import com.errand.entity.Order;
@@ -79,13 +80,11 @@ public class EvaluationServiceImpl implements EvaluationService {
     public Result getHelperEvaluationStats(Long helperId) {
         try {
             // 获取好评数量
-            Integer positiveCount = evaluationMapper.countEvaluationsByHelperIdAndReview(helperId, "1");
+            Long goodReviews = evaluationMapper.countEvaluationsByHelperIdAndReview(helperId, "1");
             // 获取差评数量
-            Integer negativeCount = evaluationMapper.countEvaluationsByHelperIdAndReview(helperId, "0");
+            Long badReviews = evaluationMapper.countEvaluationsByHelperIdAndReview(helperId, "0");
 
-            Map<String, Object> stats = new HashMap<>();
-            stats.put("positiveCount", positiveCount != null ? positiveCount : 0);
-            stats.put("negativeCount", negativeCount != null ? negativeCount : 0);
+            EvaluationStats stats = new EvaluationStats(goodReviews, badReviews);
 
             return Result.success("获取评价统计成功", stats);
         } catch (Exception e) {

@@ -38,7 +38,8 @@ public class WalletServiceImpl implements WalletService {
                 wallet.setCreateTime(LocalDateTime.now());
                 walletMapper.insertWallet(wallet);
             }
-            return Result.success("获取钱包信息成功", wallet);
+            WalletInfo walletInfo = convertToWalletInfo(wallet);
+            return Result.success("获取钱包信息成功", walletInfo);
         } catch (Exception e) {
             return Result.error("获取钱包信息失败");
         }
@@ -117,7 +118,7 @@ public class WalletServiceImpl implements WalletService {
             int offset = (request.getPage() - 1) * request.getSize();
 
             // 查询账单列表
-            List<BillInfo> billList = orderMapper.selectBillListByUserId(userId, offset, request.getSize());
+            List<BillInfo> bills = orderMapper.selectBillListByUserId(userId, offset, request.getSize());
 
             // 查询总记录数
             Long total = orderMapper.countBillListByUserId(userId);
@@ -125,7 +126,7 @@ public class WalletServiceImpl implements WalletService {
             // 构建响应
             BillResponse response = new BillResponse();
             response.setTodayIncome(todayIncome);
-            response.setBillList(billList);
+            response.setBills(bills);
             response.setTotal(total);
             response.setPage(request.getPage());
             response.setSize(request.getSize());
@@ -134,5 +135,13 @@ public class WalletServiceImpl implements WalletService {
         } catch (Exception e) {
             return Result.error("获取账单列表失败");
         }
+    }
+
+    private WalletInfo convertToWalletInfo(Wallet wallet) {
+        WalletInfo info = new WalletInfo();
+        info.setWalletId(wallet.getWalletId());
+        info.setTotalIncome(wallet.getTotalIncome());
+        info.setBalance(wallet.getBalance());
+        return info;
     }
 }

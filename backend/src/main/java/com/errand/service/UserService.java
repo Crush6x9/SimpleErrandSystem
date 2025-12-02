@@ -16,7 +16,7 @@ public interface UserService {
 
     Result certification(Long userId, CertificationRequest request);
 
-    UserInfo getUserInfo(Long userId);
+    Result getUserInfo(Long userId);
 
     Result updateUserInfo(Long userId, UpdateUserInfoRequest request);
 
