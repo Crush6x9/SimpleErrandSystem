@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class VerifyCodeUtil {
     // 存储验证码，key:手机号, value:验证码和生成时间
-    private final Map<String, VerifyCodeUtil.CodeInfo> codeStorage = new ConcurrentHashMap<>();
+    private final Map<String, CodeInfo> codeStorage = new ConcurrentHashMap<>();
 
     // 验证码有效期（5分钟）
     private static final long EXPIRE_TIME = 5 * 60 * 1000;
