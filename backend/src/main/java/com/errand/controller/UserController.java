@@ -1,6 +1,9 @@
 package com.errand.controller;
 
-import com.errand.dto.*;
+import com.errand.dto.CertificationRequest;
+import com.errand.dto.Result;
+import com.errand.dto.UpdateUserInfoRequest;
+import com.errand.dto.UpdateUsernameRequest;
 import com.errand.service.UserService;
 import com.errand.util.JwtUtil;
 import io.swagger.annotations.Api;
@@ -36,20 +39,11 @@ public class UserController {
     @ApiOperation("用户认证成为跑腿员")
     public Result certification(
             @RequestHeader("Authorization") String token,
-            @RequestParam("studentId") String studentId,
-            @RequestParam(value = "avatar", required = false) MultipartFile avatar,
-            @RequestParam("idCardImage") MultipartFile idCardImage) {
-
+            @RequestBody @Valid CertificationRequest request) {
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
             return Result.error("令牌无效或已过期");
         }
-
-        CertificationRequest request = new CertificationRequest();
-        request.setStudentId(studentId);
-        request.setAvatar(avatar);
-        request.setIdCardImage(idCardImage);
-
         return userService.certification(userId, request);
     }
 
@@ -60,13 +54,7 @@ public class UserController {
         if (userId == null) {
             return Result.error("令牌无效或已过期");
         }
-
-        UserInfo userInfo = userService.getUserInfo(userId);
-        if (userInfo != null) {
-            return Result.success("获取用户信息成功", userInfo);
-        } else {
-            return Result.error("用户不存在");
-        }
+        return userService.getUserInfo(userId);
     }
 
     @PutMapping(value = "/profile", consumes = "multipart/form-data")

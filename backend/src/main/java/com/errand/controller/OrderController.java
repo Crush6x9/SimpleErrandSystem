@@ -28,6 +28,9 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @RequestBody @Valid OrderRequest request) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.publishOrder(userId, request);
     }
 
@@ -37,6 +40,9 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.acceptOrder(userId, orderId);
     }
 
@@ -46,6 +52,9 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.completeOrder(userId, orderId);
     }
 
@@ -55,6 +64,9 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.cancelOrder(orderId, userId);
     }
 
@@ -64,13 +76,19 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.cancelAcceptOrder(orderId, userId);
     }
 
     @GetMapping("/stats")
     @ApiOperation("获取订单统计信息")
     public Result getOrderStats(@RequestHeader("Authorization") String token) {
-        Long userId = jwtUtil.getUserIdFromToken(token.replace("Bearer ", ""));
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.getOrderStats(userId);
     }
 
@@ -80,6 +98,9 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @RequestBody @Valid OrderQueryRequest request) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.getOrderList(request, userId);
     }
 
@@ -89,6 +110,9 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return orderService.getOrderDetail(orderId, userId);
     }
 }

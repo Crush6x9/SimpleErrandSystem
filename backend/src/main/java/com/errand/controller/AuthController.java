@@ -42,6 +42,12 @@ public class AuthController {
         return userService.checkPhoneExists(request);
     }
 
+    @PostMapping("/forget-password/reset")
+    @ApiOperation("重置密码")
+    public Result resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        return userService.resetPassword(request);
+    }
+
     @PostMapping("/send-code")
     @ApiOperation("生成验证码")
     public Result generateVerifyCode(@RequestBody @Valid GenerateCodeRequest request) {
@@ -52,11 +58,5 @@ public class AuthController {
     @ApiOperation("验证验证码")
     public Result verifyCode(@RequestBody @Valid VerifyCodeRequest request) {
         return verifyCodeUtil.verifyCode(request.getPhone(), request.getCode());
-    }
-
-    @PostMapping("/forget-password/reset")
-    @ApiOperation("重置密码")
-    public Result resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-        return userService.resetPassword(request);
     }
 }

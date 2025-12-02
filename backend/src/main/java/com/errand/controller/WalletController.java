@@ -25,6 +25,9 @@ public class WalletController {
     @ApiOperation("获取钱包信息")
     public Result getWalletInfo(@RequestHeader("Authorization") String token) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return walletService.getWalletInfo(userId);
     }
 
@@ -34,6 +37,9 @@ public class WalletController {
             @RequestHeader("Authorization") String token,
             @RequestBody @Valid WithdrawalRequest request) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return walletService.withdraw(userId, request);
     }
 
@@ -41,6 +47,9 @@ public class WalletController {
     @ApiOperation("获取提现记录")
     public Result getWithdrawalHistory(@RequestHeader("Authorization") String token) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return walletService.getWithdrawalHistory(userId);
     }
 
@@ -50,6 +59,9 @@ public class WalletController {
             @RequestHeader("Authorization") String token,
             @RequestBody @Valid BillQueryRequest request) {
         Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            return Result.error("令牌无效或已过期");
+        }
         return walletService.getBillList(userId, request);
     }
 }
