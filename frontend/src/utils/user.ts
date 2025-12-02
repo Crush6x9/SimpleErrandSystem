@@ -1,8 +1,8 @@
 // 用户数据管理
-import { isAuthenticated, getUserId, getAuthToken } from './auth';
+import { isAuthenticated, getUserId } from './auth';
 import { userAPI } from '@/api';
 
-// 模拟用户数据
+// 默认用户数据
 const DEFAULT_USER = {
   id: null,
   phone: '',
@@ -125,6 +125,7 @@ export const updateUsername = async (username: string) => {
   }
 }
 
+// 更新用户信息
 export const updateUserInfo = async (data: {
   username?: string;
   phone?: string;

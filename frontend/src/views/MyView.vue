@@ -29,7 +29,7 @@
         <div class="stat-label">已发订单</div>
       </div>
       <div class="stat-item--earning" @click="handleDataItemClick('earnings')">
-        <div class="stat-value">¥{{ (walletInfo?.balance || 0).toFixed(2) }}</div>
+        <div class="stat-value">¥{{ formatAmount(walletBalance) }}</div>
         <div class="stat-label">收益 ></div>
       </div>
     </div>
@@ -84,6 +84,7 @@ const user = ref(getUser())
 const showNicknameEdit = ref(false)
 const newNickname = ref('')
 const showContactDialog = ref(false)
+const walletBalance = ref(0)
 
 // 统计数据
 const stats = reactive({
@@ -121,6 +122,7 @@ const loadUserData = async () => {
       const userData = await loadUserFromServer()
       user.value = userData
     }
+    await loadWalletBalance()
   } catch (error) {
     Toast('加载用户数据失败')
   }
@@ -170,7 +172,21 @@ const loadWalletInfo = async () => {
     console.error('加载钱包信息失败:', error)
   }
 }
+const loadWalletBalance = async () => {
+  try {
+    const response = await walletAPI.getWallet()
+    if (response.code === 200 && response.data) {
+      walletBalance.value = parseFloat(response.data.balance) || 0
+    }
+  } catch (error) {
+    console.error('加载钱包余额失败:', error)
+  }
+}
 
+// 金额格式化函数
+const formatAmount = (amount: number) => {
+  return amount.toFixed(2)
+}
 const handleAvatarClick = () => {
   router.push({ name: 'Profile' })
 }

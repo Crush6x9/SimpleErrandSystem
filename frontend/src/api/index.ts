@@ -150,6 +150,7 @@ export const orderAPI = {
   cancel: (orderId: string) =>
     api.delete(`/orders/${orderId}/cancel`),
 
+  // 查询订单列表
   getList: (params: {
     type?: string;
     page?: number;
@@ -174,7 +175,6 @@ export const orderAPI = {
 
 // 钱包相关接口
 export const walletAPI = {
-  // 获取钱包信息
   getWallet: () =>
     api.get('/wallet/list'),
 
@@ -182,15 +182,12 @@ export const walletAPI = {
   withdraw: (data: { amount: number }) =>
     api.post('/wallet/withdraw', data),
 
-  // 获取提现记录
   getWithdrawals: () =>
     api.get('/wallet/withdrawals'),
 
   // 获取账单明细
   getBills: (params: { page?: number; size?: number; type?: string }) =>
-    api.get('/wallet/bills', {
-      params
-    }),
+    api.get('/wallet/bills', { params }),
 };
 
 // 评价相关接口
