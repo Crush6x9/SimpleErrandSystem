@@ -31,10 +31,6 @@ spring:
       max-file-size: 5MB
       max-request-size: 20MB
 
-# 文件上传路径
-file:
-  upload-dir: ./uploads/
-
 # 日志信息配置
 logging:
   # 字符编码
@@ -63,3 +59,15 @@ jwt:
   secret: ${JWT_SECRET:errandSystemSecretKey2025ForSimpleErrandApplication}
   expiration: 1800000  # 30分钟
   refresh-expiration: 604800000  # 7天
+
+# 应用配置
+app:
+  # 文件上传配置
+  upload:
+    max-file-size: 5242880  # 5MB
+    # 基础 URL 路径
+    base-url: http://localhost:8080
+    # 静态资源访问前缀
+    access-prefix: /uploads/**
+    # 文件存储路径
+    storage-path: ./uploads/
