@@ -2,13 +2,22 @@ import axios from 'axios';
 import { Toast } from 'vant';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.DEV ? '/api' : '/api',
   timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 // 请求拦截器,添加token
 api.interceptors.request.use(
   (config) => {
+    console.log('API请求:', {
+      url: config.url,
+      method: config.method,
+      data: config.data
+    });
+
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -16,6 +25,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('请求拦截器错误:', error);
     return Promise.reject(error);
   }
 );
@@ -29,8 +39,7 @@ api.interceptors.response.use(
       data: response.data
     });
 
-    // 直接返回整个响应数据
-    return response.data;
+    return response;
   },
   (error) => {
     console.error('API请求错误详情:', {
@@ -39,37 +48,45 @@ api.interceptors.response.use(
       status: error.response?.status,
       statusText: error.response?.statusText,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
+      fullError: error
     });
+
+    let errorMessage = '网络错误，请稍后重试';
 
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          Toast('登录已过期，请重新登录');
+          errorMessage = '登录已过期，请重新登录';
           localStorage.removeItem('authToken');
           localStorage.removeItem('userId');
           localStorage.removeItem('userPhone');
           localStorage.removeItem('userInfo');
-          window.location.href = '/login';
           break;
         case 403:
-          Toast('没有权限访问');
+          errorMessage = '没有权限访问';
           break;
         case 404:
-          Toast('请求的资源不存在');
+          errorMessage = '请求的资源不存在，请检查接口地址';
           break;
         case 500:
-          Toast('服务器错误，请稍后重试');
+          errorMessage = '服务器错误，请稍后重试';
           break;
         default:
-          Toast(`网络错误: ${error.response.status}`);
+          errorMessage = `请求失败: ${error.response.status}`;
+      }
+
+      if (error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
       }
     } else if (error.request) {
-      console.error('没有收到响应:', error.request);
-      Toast('网络连接失败，请检查网络连接');
+      console.error('没有收到响应，可能是网络问题或后端服务未启动:', error.request);
+      errorMessage = '无法连接到服务器，请检查网络连接或确保后端服务已启动';
     } else {
-      Toast('请求配置错误');
+      errorMessage = error.message || '请求配置错误';
     }
+
+    Toast(errorMessage);
     return Promise.reject(error);
   }
 );

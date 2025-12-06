@@ -67,12 +67,16 @@ const handleLogin = async () => {
   });
 
   try {
+    console.log('登录请求数据:', { phone: phone.value });
     const response = await authAPI.login({
       phone: phone.value,
       password: password.value
     });
 
     Toast.clear();
+
+    const responseData = response.data;
+    console.log('登录响应完整数据:', responseData);
 
     // 检查响应状态
     if (response.code !== 200) {
@@ -83,7 +87,7 @@ const handleLogin = async () => {
     Toast('登录成功');
 
     // 保存登录状态
-    const loginData = response.data;
+    const loginData = responseData.data;
     console.log('登录响应数据:', loginData);
 
     if (loginData && loginData.accessToken) {
