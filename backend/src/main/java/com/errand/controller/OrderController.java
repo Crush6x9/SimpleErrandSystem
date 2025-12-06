@@ -92,7 +92,7 @@ public class OrderController {
         return orderService.getOrderStats(userId);
     }
 
-    @GetMapping("/list")
+    @PostMapping("/list")
     @ApiOperation("查询订单列表")
     public Result getOrderList(
             @RequestHeader("Authorization") String token,

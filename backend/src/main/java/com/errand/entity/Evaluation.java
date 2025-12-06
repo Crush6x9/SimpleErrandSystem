@@ -19,4 +19,10 @@ public class Evaluation {
 
     @ApiModelProperty(value = "创建时间", example = "0")
     private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "委托⼈用户名")
+    private String clientUsername;
+
+    @ApiModelProperty(value = "跑腿员用户名")
+    private String helperUsername;
 }

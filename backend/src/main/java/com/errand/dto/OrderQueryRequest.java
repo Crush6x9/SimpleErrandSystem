@@ -23,4 +23,9 @@ public class OrderQueryRequest {
         this.page = page;
         this.size = size;
     }
+
+    // 计算偏移量
+    public Integer getOffset() {
+        return size * (page - 1);
+    }
 }

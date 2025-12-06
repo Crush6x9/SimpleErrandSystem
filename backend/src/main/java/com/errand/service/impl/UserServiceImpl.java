@@ -33,10 +33,13 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private VerifyCodeUtil verifyCodeUtil;
 
-    @Value("${file.upload-dir:./uploads/}")
+    @Value("${app.upload.storage-path}")
     private String uploadDir;
 
-    @Value("${app.upload.max-file-size:5242880}")
+    @Value("${app.upload.base-url}")
+    private String baseUrl;
+
+    @Value("${app.upload.max-file-size}")
     private long maxFileSize;
 
     @Override
@@ -504,7 +507,7 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 将User实体转换为UserInfo DTO
+     * 将User实体转换为UserInfo数据
      */
     private UserInfo convertToUserInfo(User user) {
         UserInfo userInfo = new UserInfo();
@@ -516,14 +519,15 @@ public class UserServiceImpl implements UserService {
         userInfo.setVerified("1".equals(user.getRole())); // 跑腿员为已认证
         userInfo.setCreatedTime(user.getCreateTime());
         userInfo.setUpdatedTime(user.getUpdateTime());
+
         // 设置头像URL
-        if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
-            userInfo.setAvatarUrl("/uploads/" + user.getAvatar());
-        }
-        // 设置证件URL（如果需要的话）
+        userInfo.setAvatarUrl(baseUrl + "/uploads/" + user.getAvatar());
+
+        // 设置证件URL
         if (user.getCertificate() != null && !user.getCertificate().isEmpty()) {
-            userInfo.setCertificateUrl("/uploads/" + user.getCertificate());
+            userInfo.setCertificateUrl(baseUrl + "/uploads/" + user.getCertificate());
         }
+
         return userInfo;
     }
 }

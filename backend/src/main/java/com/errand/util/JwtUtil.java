@@ -73,10 +73,12 @@ public class JwtUtil {
      * 从请求头中提取令牌
      */
     public String extractToken(String originalToken) {
-        if (originalToken != null && originalToken.startsWith(TOKEN_PREFIX)) {
-            return originalToken.substring(TOKEN_PREFIX.length());
+        if (originalToken == null) {
+            return null;
         }
-        return null;
+
+        // 移除令牌前缀
+        return originalToken.substring(TOKEN_PREFIX.length());
     }
 
     /**

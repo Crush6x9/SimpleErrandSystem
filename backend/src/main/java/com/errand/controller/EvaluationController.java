@@ -42,7 +42,7 @@ public class EvaluationController {
 
     @GetMapping("/stats")
     @ApiOperation("获取评价统计")
-    public Result getHelperEvaluationStats( @RequestHeader("Authorization") String token) {
+    public Result getHelperEvaluationStats(@RequestHeader("Authorization") String token) {
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
             return Result.error("令牌无效或已过期");

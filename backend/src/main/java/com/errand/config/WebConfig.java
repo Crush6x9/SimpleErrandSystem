@@ -9,12 +9,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @MapperScan("com.errand.mapper")
 public class WebConfig implements WebMvcConfigurer {
-    @Value("${file.upload-dir:./uploads/}")
+    @Value("${app.upload.storage-path}")
     private String uploadDir;
+
+    @Value("${app.upload.access-prefix}")
+    private String accessPrefix;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 映射上传文件的URL路径到实际文件路径
-        registry.addResourceHandler("/uploads/**").addResourceLocations("file:" + uploadDir);
+        registry.addResourceHandler(accessPrefix).addResourceLocations("file:" + uploadDir);
     }
 }

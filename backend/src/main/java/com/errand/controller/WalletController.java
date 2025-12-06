@@ -57,7 +57,7 @@ public class WalletController {
     @ApiOperation("获取账单列表")
     public Result getBillList(
             @RequestHeader("Authorization") String token,
-            @RequestBody @Valid BillQueryRequest request) {
+            @Valid BillQueryRequest request) {
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
             return Result.error("令牌无效或已过期");
