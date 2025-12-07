@@ -28,27 +28,27 @@
     <div class="scroll-container">
       <div class="content">
         <!-- 添加调试信息显示 -->
-        <div class="debug-info" style="padding: 10px; background: #f0f0f0; margin-bottom: 10px;">
+        <!-- <div class="debug-info" style="padding: 10px; background: #f0f0f0; margin-bottom: 10px;">
           <p>调试信息:</p>
           <p>当前用户ID: {{ currentUserId }}</p>
           <p>当前标签: {{ currentTab }}</p>
           <p>全部订单数: {{ allOrders.length }}</p>
           <p>显示订单数: {{ displayOrders.length }}</p>
-        </div>
+        </div> -->
 
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
           <van-list v-model:loading="loading" :finished="finished" finished-text="—— 没有更多了 ——" @load="onLoad">
             <!-- 添加信息显示 -->
              <div v-if="displayOrders.length === 0" class="empty-state">
               <van-empty description="暂无订单数据" />
-              <div style="text-align: center; color: #999; margin-top: 10px;">
+              <!-- <div style="text-align: center; color: #999; margin-top: 10px;">
                 <p>全部订单数: {{ allOrders.length }}</p>
                 <p>当前过滤条件: {{ 
                   currentTab === 'pending' ? '待帮助订单' : 
                   currentTab === 'mine' ? '我发布的' : 
                   currentTab === 'helping' ? '我帮助的' : '全部'
                 }}</p>
-              </div>
+              </div> -->
             </div>
 
             <!-- 订单列表 -->
@@ -505,16 +505,9 @@ const onLoad = async () => {
     // 尝试调用API
     try {
       const requestParams = {
-        type: '',
         page: 1,
         size: 20
       }
-      const typeMap: { [key: string]: string } = {
-        'pending': 'available',
-        'mine': 'published', 
-        'helping': 'accepted'
-      }
-      requestParams.type = typeMap[currentTab.value] || currentTab.value
       console.log('API请求参数:', requestParams)
       
       const response = await orderAPI.getList(requestParams)
@@ -524,44 +517,93 @@ const onLoad = async () => {
         console.log('原始订单数据:', response.data)
         
         // 检查数据格式
-        const ordersData = response.data.data.orders || response.data
+        const ordersData = response.data.data.orders || response.data.orders
         console.log('处理后订单数据:', ordersData)
         console.log('订单数据类型:', typeof ordersData, '是否是数组:', Array.isArray(ordersData))
         
         if (Array.isArray(ordersData) && ordersData.length > 0) {
-          allOrders.value = ordersData
-          localStorage.setItem('orders', JSON.stringify(ordersData))
-          console.log('成功设置订单数据，数量:', ordersData.length)
-          
-          // 检查第一条订单的数据结构
-          if (ordersData[0]) {
-            console.log('第一条订单详情:', ordersData[0])
-            console.log('clientId:', ordersData[0].clientId)
-            console.log('clientUsername:', ordersData[0].clientUsername)
-            console.log('helperId:', ordersData[0].helperId)
-          }
+          const transformedOrders = ordersData.map(transformOrderData)
+          allOrders.value = transformedOrders
+          localStorage.setItem('orders', JSON.stringify(transformedOrders))
+          console.log('成功设置订单数据，数量:', transformedOrders.length)
         } else {
           console.log('订单数据为空或不是数组，使用本地数据')
           allOrders.value = loadLocalOrders()
         }
+        updateOrderStats()
       } else {
         console.log('API返回数据格式异常，使用本地数据')
         allOrders.value = loadLocalOrders()
+        updateOrderStats()
       }
     } catch (error) {
       console.error('API调用失败，使用本地数据:', error)
       allOrders.value = loadLocalOrders()
+      updateOrderStats()
     }
-    
   } catch (error) {
     console.error('加载订单失败:', error)
     allOrders.value = loadLocalOrders()
+    updateOrderStats()
   } finally {
     loading.value = false
     finished.value = true
     refreshing.value = false
     console.log('订单加载完成，总数据量:', allOrders.value.length)
   }
+}
+
+// 更新订单统计信息（角标）
+const updateOrderStats = () => {
+  console.log('开始更新订单统计...')
+  console.log('全部订单数据:', allOrders.value)
+  console.log('当前用户ID:', currentUserId.value)
+  
+  // 统计全部订单
+  const totalOrders = allOrders.value.length
+  console.log('全部订单数:', totalOrders)
+  
+  // 统计待帮助订单 (status=0)
+  const pendingOrders = allOrders.value.filter(o => o.status === '0').length
+  console.log('待帮助订单数:', pendingOrders)
+  
+  // 统计我发布的订单
+  let myPublishedOrders = 0
+  if (currentUserId.value) {
+    myPublishedOrders = allOrders.value.filter(o => o.clientId === currentUserId.value).length
+    console.log('我发布的订单clientId列表:', allOrders.value.map(o => ({id: o.id, clientId: o.clientId})))
+  }
+  console.log('我发布的订单数:', myPublishedOrders)
+  
+  // 统计我帮助的订单
+  let myAcceptedOrders = 0
+  if (currentUserId.value) {
+    myAcceptedOrders = allOrders.value.filter(o => o.helperId === currentUserId.value).length
+    console.log('我帮助的订单helperId列表:', allOrders.value.map(o => ({id: o.id, helperId: o.helperId})))
+  }
+  console.log('我帮助的订单数:', myAcceptedOrders)
+  
+  // 更新角标
+  tabs.value.forEach(tab => {
+    if (tab.key === 'all') {
+      tab.count = totalOrders
+      console.log('全部订单角标更新:', totalOrders)
+    }
+    if (tab.key === 'pending') {
+      tab.count = pendingOrders
+      console.log('待帮助订单角标更新:', pendingOrders)
+    }
+    if (tab.key === 'mine') {
+      tab.count = myPublishedOrders
+      console.log('我发布的订单角标更新:', myPublishedOrders)
+    }
+    if (tab.key === 'helping') {
+      tab.count = myAcceptedOrders
+      console.log('我帮助的订单角标更新:', myAcceptedOrders)
+    }
+  })
+  
+  console.log('角标更新完成:', tabs.value.map(tab => ({name: tab.name, count: tab.count})))
 }
 
 // 在计算属性中添加调试
@@ -592,14 +634,6 @@ const displayOrders = computed(() => {
     filtered = filtered.filter(o => o.helperId === currentUserId.value)
     console.log('过滤后数量:', filtered.length)
   }
-
-  // 更新角标
-  tabs.value.forEach(tab => {
-    if (tab.key === 'all') tab.count = allOrders.value.length
-    if (tab.key === 'pending') tab.count = allOrders.value.filter(o => o.status === '0').length
-    if (tab.key === 'mine') tab.count = allOrders.value.filter(o => o.clientId === currentUserId.value).length
-    if (tab.key === 'helping') tab.count = allOrders.value.filter(o => o.helperId === currentUserId.value).length
-  })
 
   console.log('最终显示订单数量:', filtered.length)
   return filtered
@@ -648,38 +682,38 @@ const updateDisplayOrders = () => {
 }
 
 // 计算当前显示的订单 - 增强容错处理
-const displayOrders = computed(() => {
-  let filtered = allOrders.value
+// const displayOrders = computed(() => {
+//   let filtered = allOrders.value
 
-  if (currentTab.value === 'pending') {
-    filtered = filtered.filter(o => o.status === '0')
-  }
+//   if (currentTab.value === 'pending') {
+//     filtered = filtered.filter(o => o.status === '0')
+//   }
   
-  if (currentTab.value === 'mine') {
-    if (currentUserId.value) {
-      filtered = filtered.filter(o => {
-        const isMyOrder = o.clientId === currentUserId.value
-        return isMyOrder
-      })
-    } else {
-      filtered = [] // 用户ID无效时显示空列表
-    }
-  }
+//   if (currentTab.value === 'mine') {
+//     if (currentUserId.value) {
+//       filtered = filtered.filter(o => {
+//         const isMyOrder = o.clientId === currentUserId.value
+//         return isMyOrder
+//       })
+//     } else {
+//       filtered = [] // 用户ID无效时显示空列表
+//     }
+//   }
   
-  if (currentTab.value === 'helping') {
-    if (currentUserId.value) {
-      filtered = filtered.filter(o => {
-        const isHelping = o.helperId === currentUserId.value
-        return isHelping
-      })
-    } else {
-      filtered = [] // 用户ID无效时显示空列表
-    }
-  }
+//   if (currentTab.value === 'helping') {
+//     if (currentUserId.value) {
+//       filtered = filtered.filter(o => {
+//         const isHelping = o.helperId === currentUserId.value
+//         return isHelping
+//       })
+//     } else {
+//       filtered = [] // 用户ID无效时显示空列表
+//     }
+//   }
 
-  console.log('过滤后的订单数量:', filtered.length, '过滤条件:', currentTab.value)
-  return filtered
-})
+//   console.log('过滤后的订单数量:', filtered.length, '过滤条件:', currentTab.value)
+//   return filtered
+// })
 
 // 格式化时间显示
 const formatTime = (timeString: string) => {
