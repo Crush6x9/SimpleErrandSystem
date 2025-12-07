@@ -94,6 +94,12 @@
         WHERE user_id = #{userId}
     </select>
 
+    <select id="selectRoleById" parameterType="long" resultType="java.lang.String">
+        SELECT role
+        FROM `user`
+        WHERE user_id = #{userId}
+    </select>
+
     <update id="updateUsername">
         UPDATE `user`
         SET

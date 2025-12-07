@@ -8,7 +8,9 @@
         <id     property="orderId"          column="order_id"       />
         <result property="clientId"         column="client_id"      />
         <result property="helperId"         column="helper_id"      />
-        <result property="content"          column="content"        />
+        <result property="title"            column="title"          />
+        <result property="address"          column="address"        />
+        <result property="description"      column="description"    />
         <result property="helpTime"         column="help_time"      />
         <result property="phone"            column="phone"          />
         <result property="reward"           column="reward"         />
@@ -43,7 +45,9 @@
         UPDATE `order`
         <set>
             <if test="helperId != null">helper_id = #{helperId},</if>
-            <if test="content != null">content = #{content},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="description != null">description = #{description},</if>
             <if test="helpTime != null">help_time = #{helpTime},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="reward != null">reward = #{reward},</if>
