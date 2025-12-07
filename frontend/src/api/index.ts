@@ -39,7 +39,7 @@ api.interceptors.response.use(
       data: response.data
     });
 
-    return response;
+    return response.data;
   },
   (error) => {
     console.error('API请求错误详情:', {
