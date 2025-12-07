@@ -517,7 +517,7 @@ const onLoad = async () => {
         console.log('原始订单数据:', response.data)
         
         // 检查数据格式
-        const ordersData = response.data.data.orders || response.data.orders
+        const ordersData = response.data.orders || response.data.orders
         console.log('处理后订单数据:', ordersData)
         console.log('订单数据类型:', typeof ordersData, '是否是数组:', Array.isArray(ordersData))
         

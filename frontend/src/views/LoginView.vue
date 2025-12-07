@@ -79,7 +79,7 @@ const handleLogin = async () => {
     console.log('登录响应完整数据:', responseData);
 
     // 检查响应状态
-    if (responseData.code !== 200) {
+    if (response.code !== 200) {
       Toast(response.message || '登录失败');
       return;
     }
@@ -87,7 +87,7 @@ const handleLogin = async () => {
     Toast('登录成功');
 
     // 保存登录状态
-    const loginData = responseData.data;
+    const loginData = responseData;
     console.log('登录响应数据:', loginData);
 
     if (loginData && loginData.accessToken) {

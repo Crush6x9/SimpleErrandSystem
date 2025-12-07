@@ -178,11 +178,11 @@ const loadOrderDetail = async () => {
     loading.value = true
     const response = await orderAPI.getDetail(orderId)
 
-    if (response.data.code === 200 && response.data.data) {
-      order.value = response.data.data
+    if (response.code === 200 && response.data) {
+      order.value = response.data
       updateCancelAcceptRemainingTime()
     } else {
-      Toast(response.data.message || '获取订单详情失败')
+      Toast(response.message || '获取订单详情失败')
     }
   } catch (error: any) {
     console.error('加载订单详情失败:', error)
@@ -246,12 +246,12 @@ const handleAccept = async () => {
       loading.value = true
       const response = await orderAPI.accept(order.value.orderId.toString())
 
-      if (response.data.code === 200) {
+      if (response.code === 200) {
         Toast.success('接单成功')
         await loadOrderDetail()
         startCountdownTimer()
       } else {
-        Toast(response.data.message || '接单失败')
+        Toast(response.message || '接单失败')
       }
     } catch (error: any) {
       Toast('接单失败')
@@ -270,14 +270,14 @@ const handleComplete = async () => {
       loading.value = true
       const response = await orderAPI.complete(order.value.orderId.toString())
 
-      if (response.data.code === 200) {
+      if (response.code === 200) {
         Toast.success('订单完成成功')
         router.push({
           name: 'OrderComplete',
           query: { amount: order.value.reward }
         })
       } else {
-        Toast(response.data.message || '完成订单失败')
+        Toast(response.message || '完成订单失败')
       }
     } catch (error: any) {
       Toast('完成订单失败')
@@ -303,7 +303,7 @@ const handleCancelAccept = async () => {
       loading.value = true
       const response = await orderAPI.cancelAccept(order.value.orderId.toString())
 
-      if (response.data.code === 200) {
+      if (response.code === 200) {
         Toast.success('取消接单成功')
         await loadOrderDetail()
 
@@ -312,7 +312,7 @@ const handleCancelAccept = async () => {
           countdownTimer = null
         }
       } else {
-        Toast(response.data.message || '取消接单失败')
+        Toast(response.message || '取消接单失败')
       }
     } catch (error: any) {
       Toast('取消接单失败')
@@ -331,11 +331,11 @@ const handleCancelOrder = async () => {
       loading.value = true
       const response = await orderAPI.cancel(order.value.orderId.toString())
 
-      if (response.data.code === 200) {
+      if (response.code === 200) {
         Toast.success('订单取消成功')
         router.back()
       } else {
-        Toast(response.data.message || '取消订单失败')
+        Toast(response.message || '取消订单失败')
       }
     } catch (error: any) {
       Toast('取消订单失败')

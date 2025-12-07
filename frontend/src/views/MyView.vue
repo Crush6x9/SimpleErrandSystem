@@ -141,10 +141,9 @@ const loadStats = async () => {
 const loadOrderStats = async () => {
   try {
     const response = await orderAPI.getStats()
-    const responseData = response.data
-    if (responseData.code === 200 && responseData.data) {
-      stats.myAcceptedOrders = responseData.data.myAcceptedOrders || 0
-      stats.myPublishedOrders = responseData.data.myPublishedOrders || 0
+    if (response.code === 200 && response.data) {
+      stats.myAcceptedOrders = response.data.myAcceptedOrders || 0
+      stats.myPublishedOrders = response.data.myPublishedOrders || 0
     }
   } catch (error) {
     console.error('加载订单统计失败:', error)
@@ -154,10 +153,9 @@ const loadOrderStats = async () => {
 const loadEvaluationStats = async () => {
   try {
     const response = await evaluationAPI.getHelperEvaluationStats()
-    const responseData = response.data
-    if (responseData.code === 200 && responseData.data) {
-      evaluationStats.goodReviews = responseData.data.goodReviews || 0
-      evaluationStats.badReviews = responseData.data.badReviews || 0
+    if (response.code === 200 && response.data) {
+      evaluationStats.goodReviews = response.data.goodReviews || 0
+      evaluationStats.badReviews = response.data.badReviews || 0
     }
   } catch (error) {
     console.error('加载评价统计失败:', error)
@@ -167,9 +165,8 @@ const loadEvaluationStats = async () => {
 const loadWalletInfo = async () => {
   try {
     const response = await walletAPI.getWallet()
-    const responseData = response.data
-    if (responseData.code === 200 && responseData.data) {
-      walletInfo.value = responseData.data
+    if (response.code === 200 && response.data) {
+      walletInfo.value = response.data
     }
   } catch (error) {
     console.error('加载钱包信息失败:', error)
@@ -179,9 +176,8 @@ const loadWalletInfo = async () => {
 const loadWalletBalance = async () => {
   try {
     const response = await walletAPI.getWallet()
-    const responseData = response.data
-    if (responseData.code === 200 && responseData.data) {
-      walletBalance.value = parseFloat(responseData.data.balance) || 0
+    if (response.code === 200 && response.data) {
+      walletBalance.value = parseFloat(response.data.balance) || 0
     }
   } catch (error) {
     console.error('加载钱包余额失败:', error)
