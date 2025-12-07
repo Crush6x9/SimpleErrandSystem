@@ -12,6 +12,12 @@ public class OrderInfo {
     @ApiModelProperty(value = "订单ID")
     private Long orderId;
 
+    @ApiModelProperty(value = "委托人ID")
+    private Long clientId;
+
+    @ApiModelProperty(value = "跑腿员ID")
+    private Long helperId;
+
     @ApiModelProperty(value = "订单主题")
     private String title;
 

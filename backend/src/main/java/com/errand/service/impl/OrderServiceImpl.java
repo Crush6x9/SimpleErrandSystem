@@ -244,6 +244,8 @@ public class OrderServiceImpl implements OrderService {
     private OrderInfo convertToOrderInfo(Order order) {
         OrderInfo info = new OrderInfo();
         info.setOrderId(order.getOrderId());
+        info.setClientId(order.getClientId());
+        info.setHelperId(order.getHelperId());
         info.setTitle(order.getTitle());
         info.setAddress(order.getAddress());
         info.setDescription(order.getDescription());
