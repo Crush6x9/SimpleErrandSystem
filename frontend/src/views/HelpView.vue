@@ -5,7 +5,7 @@
       left-text="返回" 
       left-arrow 
       @click-left="handleBack" 
-    />
+    >
 
     <!-- 顶部导航栏 -->
     <div class="tab-bar">
@@ -27,8 +27,31 @@
 
     <div class="scroll-container">
       <div class="content">
+        <!-- 添加调试信息显示 -->
+        <div class="debug-info" style="padding: 10px; background: #f0f0f0; margin-bottom: 10px;">
+          <p>调试信息:</p>
+          <p>当前用户ID: {{ currentUserId }}</p>
+          <p>当前标签: {{ currentTab }}</p>
+          <p>全部订单数: {{ allOrders.length }}</p>
+          <p>显示订单数: {{ displayOrders.length }}</p>
+        </div>
+
         <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
           <van-list v-model:loading="loading" :finished="finished" finished-text="—— 没有更多了 ——" @load="onLoad">
+            <!-- 添加信息显示 -->
+             <div v-if="displayOrders.length === 0" class="empty-state">
+              <van-empty description="暂无订单数据" />
+              <div style="text-align: center; color: #999; margin-top: 10px;">
+                <p>全部订单数: {{ allOrders.length }}</p>
+                <p>当前过滤条件: {{ 
+                  currentTab === 'pending' ? '待帮助订单' : 
+                  currentTab === 'mine' ? '我发布的' : 
+                  currentTab === 'helping' ? '我帮助的' : '全部'
+                }}</p>
+              </div>
+            </div>
+
+            <!-- 订单列表 -->
             <div v-for="order in displayOrders" :key="order.id" class="order-card">
               <div class="top">
                 <span class="status" :class="'s' + order.status">
@@ -67,11 +90,11 @@
             </div>
 
             <!-- 空状态提示 -->
-            <div v-if="displayOrders.length === 0" class="empty-state">
+            <!-- <div v-if="displayOrders.length === 0" class="empty-state">
               <van-image width="100" src="/empty-order.png" />
               <p>暂无订单数据</p>
               <van-button type="primary" @click="handlePublish">发布订单</van-button>
-            </div>
+            </div> -->
           </van-list>
         </van-pull-refresh>
       </div>
@@ -446,34 +469,135 @@ const loadOrders = async (silent = false) => {
   }
 }
 
+// const onLoad = async () => {
+//   try {
+//     console.log('开始加载订单数据...')
+//     console.log('当前标签:', currentTab.value)
+    
+//     // 确保用户ID已初始化
+//     initUserId()
+    
+//     // 加载订单数据（静默模式）
+//     await loadOrders(true)
+    
+//   } catch (error) {
+//     console.error('加载订单失败:', error)
+//     // 确保无论如何都有数据
+//     const localOrders = loadLocalOrders()
+//     if (localOrders.length === 0) {
+//       allOrders.value = createMockOrders()
+//     } else {
+//       allOrders.value = localOrders
+//     }
+//     updateDisplayOrders()
+//   } finally {
+//     loading.value = false
+//     finished.value = true
+//     refreshing.value = false
+//     console.log('订单加载完成，数据量:', allOrders.value.length)
+//   }
+// }
 const onLoad = async () => {
   try {
-    console.log('开始加载订单数据...')
-    console.log('当前标签:', currentTab.value)
+    console.log('开始加载订单数据，当前标签:', currentTab.value)
+    console.log('当前用户ID:', currentUserId.value)
     
-    // 确保用户ID已初始化
-    initUserId()
-    
-    // 加载订单数据（静默模式）
-    await loadOrders(true)
+    // 尝试调用API
+    try {
+      const requestParams = {
+        type: getBackendType(currentTab.value),
+        page: 1,
+        size: 20
+      }
+      console.log('API请求参数:', requestParams)
+      
+      const response = await orderAPI.getList(requestParams)
+      console.log('API响应数据:', response)
+      
+      if (response && response.data) {
+        console.log('原始订单数据:', response.data)
+        
+        // 检查数据格式
+        const ordersData = response.data.orders || response.data
+        console.log('处理后订单数据:', ordersData)
+        console.log('订单数据类型:', typeof ordersData, '是否是数组:', Array.isArray(ordersData))
+        
+        if (Array.isArray(ordersData) && ordersData.length > 0) {
+          allOrders.value = ordersData
+          localStorage.setItem('orders', JSON.stringify(ordersData))
+          console.log('成功设置订单数据，数量:', ordersData.length)
+          
+          // 检查第一条订单的数据结构
+          if (ordersData[0]) {
+            console.log('第一条订单详情:', ordersData[0])
+            console.log('clientId:', ordersData[0].clientId)
+            console.log('clientUsername:', ordersData[0].clientUsername)
+            console.log('helperId:', ordersData[0].helperId)
+          }
+        } else {
+          console.log('订单数据为空或不是数组，使用本地数据')
+          allOrders.value = loadLocalOrders()
+        }
+      } else {
+        console.log('API返回数据格式异常，使用本地数据')
+        allOrders.value = loadLocalOrders()
+      }
+    } catch (error) {
+      console.error('API调用失败，使用本地数据:', error)
+      allOrders.value = loadLocalOrders()
+    }
     
   } catch (error) {
     console.error('加载订单失败:', error)
-    // 确保无论如何都有数据
-    const localOrders = loadLocalOrders()
-    if (localOrders.length === 0) {
-      allOrders.value = createMockOrders()
-    } else {
-      allOrders.value = localOrders
-    }
-    updateDisplayOrders()
+    allOrders.value = loadLocalOrders()
   } finally {
     loading.value = false
     finished.value = true
     refreshing.value = false
-    console.log('订单加载完成，数据量:', allOrders.value.length)
+    console.log('订单加载完成，总数据量:', allOrders.value.length)
   }
 }
+
+// 在计算属性中添加调试
+const displayOrders = computed(() => {
+  console.log('开始计算显示订单，当前标签:', currentTab.value)
+  console.log('全部订单数量:', allOrders.value.length)
+  console.log('全部订单数据:', allOrders.value)
+  
+  let filtered = allOrders.value
+
+  // 添加详细的过滤调试
+  if (currentTab.value === 'pending') {
+    console.log('过滤条件: 待帮助订单 (status=0)')
+    filtered = filtered.filter(o => o.status === '0')
+    console.log('过滤后数量:', filtered.length)
+  }
+  
+  if (currentTab.value === 'mine') {
+    console.log('过滤条件: 我发布的 (clientId=', currentUserId.value, ')')
+    console.log('全部订单的clientId列表:', filtered.map(o => o.clientId))
+    filtered = filtered.filter(o => o.clientId === currentUserId.value)
+    console.log('过滤后数量:', filtered.length)
+  }
+  
+  if (currentTab.value === 'helping') {
+    console.log('过滤条件: 我帮助的 (helperId=', currentUserId.value, ')')
+    console.log('全部订单的helperId列表:', filtered.map(o => o.helperId))
+    filtered = filtered.filter(o => o.helperId === currentUserId.value)
+    console.log('过滤后数量:', filtered.length)
+  }
+
+  // 更新角标
+  tabs.value.forEach(tab => {
+    if (tab.key === 'all') tab.count = allOrders.value.length
+    if (tab.key === 'pending') tab.count = allOrders.value.filter(o => o.status === '0').length
+    if (tab.key === 'mine') tab.count = allOrders.value.filter(o => o.clientId === currentUserId.value).length
+    if (tab.key === 'helping') tab.count = allOrders.value.filter(o => o.helperId === currentUserId.value).length
+  })
+
+  console.log('最终显示订单数量:', filtered.length)
+  return filtered
+})
 
 const onRefresh = () => {
   console.log('下拉刷新')
@@ -841,10 +965,8 @@ const handleAuth = () => {
 
 .scroll-container {
   height: calc(100vh - 150px);
-  /* 减去导航栏高度 */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* 平滑滚动 */
 }
 .publish-section{
   display: flex;
