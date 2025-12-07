@@ -5,7 +5,7 @@
       left-text="返回" 
       left-arrow 
       @click-left="handleBack" 
-    >
+    />
 
     <!-- 顶部导航栏 -->
     <div class="tab-bar">
@@ -505,10 +505,16 @@ const onLoad = async () => {
     // 尝试调用API
     try {
       const requestParams = {
-        type: getBackendType(currentTab.value),
+        type: '',
         page: 1,
         size: 20
       }
+      const typeMap: { [key: string]: string } = {
+        'pending': 'available',
+        'mine': 'published', 
+        'helping': 'accepted'
+      }
+      requestParams.type = typeMap[currentTab.value] || currentTab.value
       console.log('API请求参数:', requestParams)
       
       const response = await orderAPI.getList(requestParams)
@@ -518,7 +524,7 @@ const onLoad = async () => {
         console.log('原始订单数据:', response.data)
         
         // 检查数据格式
-        const ordersData = response.data.orders || response.data
+        const ordersData = response.data.data.orders || response.data
         console.log('处理后订单数据:', ordersData)
         console.log('订单数据类型:', typeof ordersData, '是否是数组:', Array.isArray(ordersData))
         
