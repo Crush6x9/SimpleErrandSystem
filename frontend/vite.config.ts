@@ -35,6 +35,12 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }
+    },
+    host: '0.0.0.0',
+    open: true,
+    strictPort: true,
+    hmr: {
+      overlay: true
     }
   },
   resolve: {
@@ -48,15 +54,6 @@ export default defineConfig({
       scss: {
         additionalData: `@use "@/styles/variables.scss" as *;`
       }
-    }
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 3000,
-    open: true,
-    strictPort: true,
-    hmr: {
-      overlay: true
     }
   },
   build: {
