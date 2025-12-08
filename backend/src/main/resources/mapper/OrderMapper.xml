@@ -78,6 +78,7 @@
             <if test="query.type == 'available'">
                 o.status = '0'
             </if>
+            AND o.status != '3'
         </where>
         ORDER BY o.publish_time DESC
         LIMIT #{query.size} OFFSET #{query.offset}
@@ -96,6 +97,7 @@
             <if test="query.type == 'available'">
                 o.status = '0'
             </if>
+            AND o.status != '3'
         </where>
     </select>
 
@@ -108,7 +110,7 @@
     </select>
 
     <select id="countPublishedOrders" parameterType="Long" resultType="Long">
-        SELECT COUNT(*) FROM `order` WHERE client_id = #{userId}
+        SELECT COUNT(*) FROM `order` WHERE client_id = #{userId} AND status != '3'
     </select>
 
     <select id="countAcceptedOrders" parameterType="Long" resultType="Long">
