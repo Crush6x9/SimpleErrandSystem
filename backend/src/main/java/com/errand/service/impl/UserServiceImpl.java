@@ -329,11 +329,14 @@ public class UserServiceImpl implements UserService {
             }
 
             // 更新学号
+            boolean hasStuId = false;
             if (request.getStudentId() != null && !request.getStudentId().trim().isEmpty()) {
                 user.setStudentId(request.getStudentId().trim());
+                hasStuId = true;
             }
 
             // 处理证件图片上传
+            boolean hasIdCard = false;
             if (request.getIdCardImage() != null && !request.getIdCardImage().isEmpty()) {
                 String idCardValidation = FileUploadUtil.validateFile(request.getIdCardImage(), "证件图片");
                 if (idCardValidation != null) {
@@ -345,6 +348,12 @@ public class UserServiceImpl implements UserService {
                     return Result.error("证件图片上传失败");
                 }
                 user.setCertificate(idCardImagePath);
+                hasIdCard = true;
+            }
+
+            // 如果补全了学号和证件，更新用户身份为跑腿员
+            if (hasStuId && hasIdCard) {
+                user.setRole("1");
             }
 
             user.setUpdateTime(LocalDateTime.now());
