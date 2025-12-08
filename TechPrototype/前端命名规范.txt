@@ -1,0 +1,52 @@
+前端命名规范
+0、全部使用英文，最好望文知意，比如登陆界面LoginView.vue
+1、目录命名
+全部采用小写方式， 以中划线分隔，如router
+2、JS、CSS、SCSS、HTML、PNG、TS 文件命名
+全部采用小写方式， 以中划线分隔，如shims-vue.d.ts
+3、Vue文件命名
+全部采用大驼峰命名，如HomeView.vue
+4、CSS —— BEM 命名规范
+*块（block）、元素（element）、修饰符（modifier）
+（1）-  中划线 ：仅作为连字符使用，表示某个块或者某个子元素的多单词之间的连接记号。
+（2）__双下划线：双下划线用来连接块和块的子元素
+（3）-- 双连字符：双连字符用来描述一个块或者块的子元素的一种状态
+*每一个块(block)名应该有一个前缀
+例如：
+有一个块 命名为block
+则block__element 代表 .block 的后代，即块下的小元素。
+而block--modifier 代表 .block 的不同状态或不同版本。
+使用两个连字符和下划线而不是一个，是为了让自己的块可以用单个连字符来界定。
+4.1、Block（块）：是一个独立的组件，可以重复使用，不依赖于页面上的其他组件。
+	命名规则：使用小写字母，多个单词之间用连字符（-）连接。
+	例：.header {}
+4.2、Element（元素）：是Block的组成部分，不能脱离Block单独使用。
+	命名规则：Block名称 + 双下划线（__）+ Element名称。
+	例：.header__logo {}
+4.3、Modifier（修饰符）：用于定义Block或Element的外观、状态或行为。
+	命名规则：对于Block的修饰：Block名称 + 双连字符（--）+ Modifier名称
+			对于Element的修饰：Block名称__Element名称 + 双连字符（--）+ Modifier名称
+	例：/* Block修饰符 */			/* Element修饰符 */
+		.button--large {}		.menu__item--active {}
+*注意：
+①并不是每个地方都应该使用 BEM 命名方式。
+   当需要明确关联性的模块关系时，应当使用 BEM 格式。
+   比如只是一条公共的单独的样式，就没有使用 BEM 格式的意义：
+	.hide {
+    		display: none !important;
+	}
+②层级最好不要超过 4 级，不然增加阅读的理解难度
+*推荐写法和风格：
+.form { }
+.form--theme-xmas { }
+.form--simple { }
+.form__input { }
+.form__submit { }
+.form__submit--disabled { }
+//对应的HTML结构如下：
+<form class="form form--theme-xmas form--simple">
+  <input class="form__input" type="text" />
+  <input
+    class="form__submit form__submit--disabled"
+    type="submit" />
+</form>
